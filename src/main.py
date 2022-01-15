@@ -2,8 +2,9 @@ import os
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import BoundFilter
 
-from utils.eos import get_info, get_balance
+from utils.eos import get_info, get_balance, create_new_keypair
 from utils.logger import logger as Logger
+from utils.cmc import CMCApi
 
 
 class MyFilter(BoundFilter):
@@ -18,6 +19,7 @@ class MyFilter(BoundFilter):
 
 logger = Logger
 
+
 bot = Bot(token=os.getenv('TELEGRAM_BOT_API_KEY'),  parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 dp.filters_factory.bind(MyFilter)
@@ -30,6 +32,13 @@ async def send_welcome(message: types.Message):
     """
     get_info()
     get_balance('ore1shlejxsp')
+    create_new_keypair()
+
+    cmc_api = CMCApi()
+    await cmc_api.start_api()
+    ore_price = await cmc_api.get_ORE_price_USD()
+    logger.debug(f'ore price: ${ore_price}')
+
     await bot.send_message(message.chat.id, "Hi!\nI'm The ORE Tip Bot!\nPowered by the ORE Network")
 
 # @dp.message_handler(content_types=types.ContentTypes.ANY)
