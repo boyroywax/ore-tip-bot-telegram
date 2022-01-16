@@ -1,12 +1,17 @@
 import os
-from aiogram.dispatcher.filters import BoundFilter
 from aiogram import Bot, Dispatcher, executor, types
 from utils.cmc import CMC, OREPrice
 from datetime import datetime
+from aiogram.dispatcher.filters import BoundFilter
 
 from utils.eos import get_info, get_balance, create_new_keypair
 
-class MyFilter(BoundFilter):
+cmc = CMC()
+latest_price = OREPrice()
+
+bot = Bot(token=os.getenv('TELEGRAM_BOT_API_KEY'),  parse_mode=types.ParseMode.HTML)
+
+class AdminFilter(BoundFilter):
     key: str = 'is_admin'
 
     def __init__(self, is_admin):
@@ -16,13 +21,8 @@ class MyFilter(BoundFilter):
         member = await bot.get_chat_member(message.chat.id, message.from_user.id)
         return member.is_chat_admin()
 
-cmc = CMC()
-latest_price = OREPrice()
-latest_price.set_datetime(datetime.now())
-
-bot = Bot(token=os.getenv('TELEGRAM_BOT_API_KEY'),  parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
-dp.filters_factory.bind(MyFilter)
+dp.filters_factory.bind(AdminFilter)
 
 @dp.message_handler(commands=['start', 'help'], state="*")
 async def send_welcome(message: types.Message):

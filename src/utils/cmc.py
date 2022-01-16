@@ -7,7 +7,6 @@ from typing_extensions import Self
 from utils.api import Api
 from utils.logger import logger as Logger
 
-
 api = Api()
 logger = Logger
 
@@ -20,13 +19,14 @@ class CMC():
         base_url = os.getenv('CMC_API_ENDPOINT')
         api.setBaseUrl(base_url)
 
-        headers = { 'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY') }
+        headers = { 'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY'), 'Content-Type': 'application/json' }
         api.setHeaders(headers)
 
     async def get_ORE_price_USD(self) -> float:
         endpoint = '/v1/cryptocurrency/quotes/latest'
         params = {'slug': 'ore-network'}
-        result = await api.makeCall('GET', endpoint, params, None)
+        kwargs = {"endpoint": endpoint, "params": params }
+        result = await api.makeCall('GET', **kwargs)
         usd_price = float(result['data']['12743']['quote']['USD']['price'])
         return usd_price
 
@@ -36,6 +36,9 @@ cmc = CMC()
 class OREPrice():
     price: Optional[float] = 0.0
     datetime: Optional[datetime] = None
+
+    def __init__(self):
+        self.datetime = datetime.now()
 
     def set_price(self, new_price) -> None:
         self.price = new_price
@@ -54,5 +57,3 @@ class OREPrice():
         self.price = await cmc.get_ORE_price_USD()
         self.datetime = datetime.now()
         return self
-
-
