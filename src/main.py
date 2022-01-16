@@ -1,18 +1,13 @@
 import os
-from typing_extensions import Self
-from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import BoundFilter
-from datetime import datetime, timedelta
-from pydantic.dataclasses import dataclass
-from typing import Optional
+from aiogram import Bot, Dispatcher, executor, types
+from utils.cmc import CMC, OREPrice
+from datetime import datetime
 
 from utils.eos import get_info, get_balance, create_new_keypair
-from utils.logger import logger as Logger
-from utils.cmc import CMCApi
-
 
 class MyFilter(BoundFilter):
-    key = 'is_admin'
+    key: str = 'is_admin'
 
     def __init__(self, is_admin):
         self.is_admin = is_admin
@@ -21,42 +16,13 @@ class MyFilter(BoundFilter):
         member = await bot.get_chat_member(message.chat.id, message.from_user.id)
         return member.is_chat_admin()
 
-
-logger = Logger
-cmc_api = CMCApi()
-
-@dataclass
-class OREPrice():
-    price: Optional[float] = 0.0
-    datetime: Optional[datetime] = None
-
-    def set_price(self, new_price):
-        self.price = new_price
-
-    def set_datetime(self, new_datetime):
-        self.datetime = new_datetime
-
-    def check_expired(self):
-        time_diff = datetime.now() - self.datetime
-        if time_diff.total_seconds() >= 60:
-            return True
-        else:
-            return False
-
-    async def update_price(self) -> Self:
-        self.price = await cmc_api.get_ORE_price_USD()
-        self.datetime = datetime.now()
-        return self
-
-
+cmc = CMC()
 latest_price = OREPrice()
 latest_price.set_datetime(datetime.now())
 
 bot = Bot(token=os.getenv('TELEGRAM_BOT_API_KEY'),  parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 dp.filters_factory.bind(MyFilter)
-
-
 
 @dp.message_handler(commands=['start', 'help'], state="*")
 async def send_welcome(message: types.Message):
@@ -87,7 +53,6 @@ async def get_price(message: types.Message):
     This handler will return the current ORE price
     """
     time_diff = datetime.now() - latest_price.datetime
-    await cmc_api.start_api()
     if latest_price.price == 0.0:
         await latest_price.update_price()
     elif time_diff.total_seconds() >= 60:

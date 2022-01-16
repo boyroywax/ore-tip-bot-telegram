@@ -1,4 +1,3 @@
-from curses import keyname
 import json
 from eospy.cleos import Cleos
 from eospy.keys import EOSKey, check_wif
