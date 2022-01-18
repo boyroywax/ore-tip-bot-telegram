@@ -50,15 +50,14 @@ class Api:
             return {'status': resp.status, 'message': await resp.text()}
 
     async def makeCall(self, method, **kwargs) -> dict:
-        logger.debug(f'kwargs: {kwargs}')
         for arg in kwargs:
-            logger.debug(f'arg: {arg}, kwargs: {kwargs[arg]}')
-            if arg == 'endpoint':
-                endpoint = kwargs[arg]
-            elif arg == 'params':
-                params = kwargs[arg]
-            elif arg == 'data':
-                data = kwargs[arg]
+            match arg: 
+                case 'endpoint':
+                    endpoint = kwargs[arg]
+                case 'params':
+                    params = kwargs[arg]
+                case 'data':
+                    data = kwargs[arg]
 
         if endpoint is None:
             url = self.baseUrl

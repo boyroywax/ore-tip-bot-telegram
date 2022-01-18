@@ -1,12 +1,10 @@
 import os
 from aiogram import Bot, Dispatcher, executor, types
-from utils.cmc import CMC, OREPrice
-from datetime import datetime
 from aiogram.dispatcher.filters import BoundFilter
 
+from utils.cmc import OREPrice
 from utils.eos import get_info, get_balance, create_new_keypair
 
-cmc = CMC()
 latest_price = OREPrice()
 
 bot = Bot(token=os.getenv('TELEGRAM_BOT_API_KEY'),  parse_mode=types.ParseMode.HTML)
@@ -29,16 +27,8 @@ async def send_welcome(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
-    # Testing functions:
-    get_info()
-    get_balance('ore1shlejxsp')
-    create_new_keypair()
-
     await bot.send_message(message.chat.id, "Hi!\nI'm The ORE Tip Bot!\nPowered by the ORE Network")
 
-# @dp.message_handler(content_types=types.ContentTypes.ANY)
-# async def echo(message: types.Message):
-#     await bot.send_message(message.chat.id, message.text)
 
 @dp.message_handler(commands=['admin'], is_admin=True)
 async def admin_panel(message: types.Message):
@@ -50,17 +40,28 @@ async def admin_panel(message: types.Message):
 @dp.message_handler(commands=['price'])
 async def get_price(message: types.Message):
     """
-    This handler will return the current ORE price
+    This handler will return the current ORE price and 24h price percent change
     """
-    time_diff = datetime.now() - latest_price.datetime
-    if latest_price.price == 0.0:
-        await latest_price.update_price()
-    elif time_diff.total_seconds() >= 60:
-        await latest_price.update_price()
+    await latest_price.update_price()
+    await bot.send_message(message.chat.id, f'ORE Price: ${latest_price.price}\nPercent Change (24h): {latest_price.price_change_24h}%')
 
-    # logger.debug(f'ore price: ${ore_price}')
-    await bot.send_message(message.chat.id, f'ORE Price: ${latest_price.price}')
+@dp.message_handler(commands=['volume'])
+async def get_volume(message: types.Message):
+    """
+    This handler will return the current ORE 24Hr Volume
+    """
+    await latest_price.update_price()
+    await bot.send_message(message.chat.id, f'ORE Volume (24h): ${latest_price.volume_24h}')
 
+@dp.message_handler(commands=['test'], state="*")
+async def test(message: types.Message):
+    """
+    This handler will be called when user sends `/test` command
+    """
+    # Testing functions:
+    get_info()
+    get_balance('ore1shlejxsp')
+    create_new_keypair()
 
 if __name__ == '__main__':
-    executor.start_polling(dispatcher = dp, skip_updates=True)
+    executor.start_polling(dispatcher=dp, skip_updates=True)
