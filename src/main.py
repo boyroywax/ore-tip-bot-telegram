@@ -58,7 +58,7 @@ async def start_cmd_handler(message: types.Message):
     await message.reply("How can I help?", reply_markup=keyboard_markup)
 
 @dp.message_handler(state=Help.active)
-async def all_msg_handler(message: types.Message, state: FSMContext):
+async def help_msg_handler(message: types.Message, state: FSMContext):
     # pressing of a KeyboardButton is the same as sending the regular message with the same text
     # so, to handle the responses from the keyboard, we need to use a message_handler
     # in real bot, it's better to define message_handler(text="...") for each button

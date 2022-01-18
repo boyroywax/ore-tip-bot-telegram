@@ -1,6 +1,5 @@
 aiogram
-aiohttp[speedups]
-uvloop
+aiohttp
 libeospy
 pydantic
 python-dotenv
