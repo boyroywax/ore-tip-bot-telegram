@@ -91,6 +91,7 @@ async def all_msg_handler(message: types.Message, state: FSMContext):
     await message.reply(reply_text, reply_markup=types.ReplyKeyboardRemove())
     # with message, we send types.ReplyKeyboardRemove() to hide the keyboard
 
+    # Reset the State
     await state.finish()
     
 
@@ -114,7 +115,8 @@ async def get_volume(message: types.Message):
     """
     This handler will return the current ORE 24Hr Volume
     """
-    await latest_price.update_price()
+    result = await latest_price.update_price()
+    # logger.debug(result)
     await bot.send_message(message.chat.id, f'ORE Volume (24h): ${latest_price.volume_24h:,}')
 
 @dp.message_handler(commands=['test', 't'], state="*")
