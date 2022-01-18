@@ -37,16 +37,4 @@ def create_new_keypair() -> dict:
 
     logger.debug(check_wif(private_key))
 
-    # check = EOSKey.to_public(key)
-    # logger.debug(f'to_public of private key: {check}')
-
-    # wif = EOSKey.to_wif(key)
-    # logger.debug(f'to_wif of key: {wif}')
-
-    # key_pair['public'] = ce.create_key()
-    # logger.debug(f'Cleos generated public key: {key_pair["public"]}')
-
-    # key_pair['private'] = EOSKey.to_wif(key_pair['public'])
-    # logger.debug(f'wif2: {key_pair["private"]}')
-
     return key_pair

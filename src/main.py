@@ -59,9 +59,18 @@ async def test(message: types.Message):
     This handler will be called when user sends `/test` command
     """
     # Testing functions:
-    get_info()
     get_balance('ore1shlejxsp')
     create_new_keypair()
+
+@dp.message_handler(commands=['block'], state="*")
+async def block_chain_info(message: types.Message):
+    """
+    This handler will be called when user send '/block' command
+    """
+    ore_block_info = get_info()
+    head_block = ore_block_info['head_block_num']
+    block_producer = ore_block_info['head_block_producer']
+    await bot.send_message(message.chat.id, f'ORE Head Block: {head_block}\nCurrent Block Producer: {block_producer}')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=True)
