@@ -7,29 +7,31 @@ from typing_extensions import Self
 from utils.api import Api
 from utils.logger import logger as Logger
 
-api = Api()
-logger = Logger
 
+logger = Logger
+RESET_TIME = float(os.getenv('CMC_API_RESET_TIME'))
 @dataclass
 class CMC():
     base_url: Optional[str] = None
     headers: Optional[dict] = None
     latest_result: Optional[dict] = None
     result_datetime: Optional[datetime] = None
+    api: Optional[Api] = None
 
     def __init__(self) -> None:
+        self.api = Api()
         base_url = os.getenv('CMC_API_ENDPOINT')
-        api.setBaseUrl(base_url)
+        self.api.setBaseUrl(base_url)
 
         headers = { 'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY'), 'Content-Type': 'application/json' }
-        api.setHeaders(headers)
+        self.api.setHeaders(headers)
 
     def check_expired(self) -> bool:
         if (self.result_datetime is None):
             return True
         
         time_diff = datetime.now() - self.result_datetime
-        if (time_diff.total_seconds() >= 60):
+        if (time_diff.total_seconds() >= RESET_TIME):
             return True
         else:
             return False
@@ -39,7 +41,7 @@ class CMC():
             endpoint = '/v1/cryptocurrency/quotes/latest'
             params = {'slug': 'ore-network'}
             kwargs = {"endpoint": endpoint, "params": params}
-            self.latest_result = await api.makeCall('GET', **kwargs)
+            self.latest_result = await self.api.makeCall('GET', **kwargs)
             self.result_datetime = datetime.now()
         
         return self.latest_result
@@ -61,17 +63,16 @@ class CMC():
         percent_change_24h = float(result['data']['12743']['quote']['USD']['percent_change_24h'])
         logger.debug(f'percent change (24h) info: {percent_change_24h}')
         return percent_change_24h
-
-cmc = CMC()
-
 @dataclass
-class OREPrice():
+class OREPrice(CMC):
     price: Optional[float] = 0.0
     volume_24h: Optional[float] = 0.0
     price_change_24h: Optional[float] = 0.0
     datetime: Optional[datetime] = None
+    cmc: Optional[CMC] = None
 
     def __init__(self) -> None:
+        self.cmc = CMC()
         self.datetime = datetime.now()
 
     def set_price(self, new_price) -> None:
@@ -82,14 +83,14 @@ class OREPrice():
 
     def check_expired(self) -> bool:
         time_diff = datetime.now() - self.datetime
-        if time_diff.total_seconds() >= 60:
+        if time_diff.total_seconds() >= RESET_TIME:
             return True
         else:
             return False
 
     async def update_price(self) -> Self:
-        self.price = await cmc.get_ORE_price_USD()
-        self.volume_24h = await cmc.get_ORE_24h_volume()
-        self.price_change_24h = await cmc.get_ORE_24h_price_change()
+        self.price = await self.cmc.get_ORE_price_USD()
+        self.volume_24h = await self.cmc.get_ORE_24h_volume()
+        self.price_change_24h = await self.cmc.get_ORE_24h_price_change()
         self.datetime = datetime.now()
         return self
