@@ -10,10 +10,9 @@ from utils.logger import logger as Logger
 
 logger = Logger
 RESET_TIME = float(os.getenv('CMC_API_RESET_TIME'))
+
 @dataclass
 class CMC():
-    base_url: Optional[str] = None
-    headers: Optional[dict] = None
     latest_result: Optional[dict] = None
     result_datetime: Optional[datetime] = None
     api: Optional[Api] = None
@@ -63,8 +62,9 @@ class CMC():
         percent_change_24h = float(result['data']['12743']['quote']['USD']['percent_change_24h'])
         logger.debug(f'percent change (24h) info: {percent_change_24h}')
         return percent_change_24h
+
 @dataclass
-class OREPrice(CMC):
+class OREPrice():
     price: Optional[float] = 0.0
     volume_24h: Optional[float] = 0.0
     price_change_24h: Optional[float] = 0.0

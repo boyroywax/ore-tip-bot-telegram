@@ -1,12 +1,13 @@
 import json
 from eospy.cleos import Cleos
 from eospy.keys import EOSKey, check_wif
+import os
 
 from utils.logger import logger as Logger
 
 logger = Logger
 
-ce = Cleos(url='https://ore.openrights.exchange')
+ce = Cleos(os.getenv('CLEOS_URL'))
 
 def get_info() -> dict:
     get_info = ce.get_info()

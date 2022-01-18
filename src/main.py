@@ -37,18 +37,18 @@ async def start_cmd_handler(message: types.Message):
     # default row_width is 3, so here we can omit it actually
     # kept for clearness
 
-    btns_text = ('ORE NETWORK', 'ORE-ID', 'ORE VAULT')
+    btns_text = ('🕸 ORE NETWORK', '👨‍⚕️ ORE-ID', '🏦 ORE VAULT')
     keyboard_markup.row(*(types.KeyboardButton(text) for text in btns_text))
     # adds buttons as a new row to the existing keyboard
     # the behaviour doesn't depend on row_width attribute
 
     more_btns_text = (
-        "White Paper",
-        "Road Map",
-        "GitHub",
-        "Block Explorer",
-        "Team",
-        "API"
+        "📑 White Paper",
+        "🛣 Road Map",
+        "🧑‍💻 GitHub",
+        "⛓ Block Explorer",
+        "👨‍👧‍👧 Team",
+        "🧙‍♂️ API"
     )
     keyboard_markup.add(*(types.KeyboardButton(text) for text in more_btns_text))
     # adds buttons. New rows are formed according to row_width parameter
@@ -67,26 +67,25 @@ async def all_msg_handler(message: types.Message, state: FSMContext):
     button_text = message.text
     logger.debug('The answer is %r', button_text)  # print the text we've got
 
-    if button_text == 'ORE NETWORK':
-        reply_text = "<a href='https://ore.network/'>https://ore.network/</a>"
-    elif button_text == 'ORE-ID':
-        reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
-    elif button_text == 'ORE VAULT':
-        reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
-    elif button_text == 'White Paper':
-        reply_text = "<a href='https://ore.network/wp-content/uploads/2021/09/ORE-Whitepaper-2.0.pdf'>ORE-Whitepaper-2.0.pdf</a>"
-    elif button_text == 'Road Map':
-        reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
-    elif button_text == 'GitHub':
-        reply_text = "<a href='https://github.com/Open-Rights-Exchange'>https://github.com/Open-Rights-Exchange</a>"
-    elif button_text == 'Block Explorer':
-        reply_text = "<a href='https://explorer.ore.network/'>https://explorer.ore.network/</a>"
-    elif button_text == 'Team':
-        reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
-    elif button_text == 'API':
-        reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
-    else:
-        await message.reply('', reply_markup=types.ReplyKeyboardRemove())
+    match button_text:
+        case '🕸 ORE NETWORK':
+            reply_text = "<a href='https://ore.network/'>https://ore.network/</a>"
+        case '👨‍⚕️ ORE-ID':
+            reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
+        case '🏦 ORE VAULT':
+            reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
+        case '📑 White Paper':
+            reply_text = "<a href='https://ore.network/wp-content/uploads/2021/09/ORE-Whitepaper-2.0.pdf'>ORE-Whitepaper-2.0.pdf</a>"
+        case '🛣 Road Map':
+            reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
+        case '🧑‍💻 GitHub':
+            reply_text = "<a href='https://github.com/Open-Rights-Exchange'>https://github.com/Open-Rights-Exchange</a>"
+        case 'Block Explorer':
+            reply_text = "<a href='https://explorer.ore.network/'>https://explorer.ore.network/</a>"
+        case '👨‍👧‍👧 Team':
+            reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
+        case '🧙‍♂️ API':
+            reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
 
     await message.reply(reply_text, reply_markup=types.ReplyKeyboardRemove())
     # with message, we send types.ReplyKeyboardRemove() to hide the keyboard
