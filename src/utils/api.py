@@ -79,7 +79,10 @@ class Api:
             # NO PARAMS PASSED
             else:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, headers=self.headers) as resp:
+                    async with session.get(
+                        url,
+                        headers=self.headers
+                    ) as resp:
                         return await self.returnResponse(resp)
         # POST
         elif method == 'POST':
