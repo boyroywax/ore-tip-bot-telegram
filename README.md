@@ -16,7 +16,9 @@ A friendly Telegram bot created for the ORE Network. Written in Python using aio
 git clone https://github.com/boyroywax/ore-tip-bot-telegram
 ```
 Rename the ```.env-example``` to ```.env``` and fill in API Keys and Test info.
-
+```shell
+cp .env-example .env
+```
 ## Run the Telegram bot:
 ### Locally using .venv
 Start up your local virtual environment

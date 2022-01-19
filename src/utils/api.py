@@ -113,3 +113,6 @@ class Api:
                     headers=self.headers
                 ) as resp:
                     return await self.returnResponse(resp)
+        # INCORRECT METHOD
+        else:
+            logger.error(f'An incorrect method was passed to Api class - {method}')
