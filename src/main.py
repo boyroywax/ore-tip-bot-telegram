@@ -84,23 +84,19 @@ async def help_msg_handler(message: types.Message, state: FSMContext):
 
     match button_text:
         case '🕸 ORE NETWORK':
-            reply_text = "<a href='https://ore.network/'>"
-            "https://ore.network/</a>"
+            reply_text = "<a href='https://ore.network/'>https://ore.network/</a>"
         case '👨‍⚕️ ORE-ID':
             reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
         case '🏦 ORE VAULT':
             reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
         case '📑 White Paper':
-            reply_text = "<a href='https://ore.network/wp-content/uploads/"
-            "2021/09/ORE-Whitepaper-2.0.pdf'>ORE-Whitepaper-2.0.pdf</a>"
+            reply_text = "<a href='https://ore.network/wp-content/uploads/2021/09/ORE-Whitepaper-2.0.pdf'>ORE-Whitepaper-2.0.pdf</a>"
         case '🛣 Road Map':
             reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
         case '🧑‍💻 GitHub':
-            reply_text = "<a href='https://github.com/Open-Rights-Exchange'>"
-            "https://github.com/Open-Rights-Exchange</a>"
+            reply_text = "<a href='https://github.com/Open-Rights-Exchange'>https://github.com/Open-Rights-Exchange</a>"
         case '⛓ Block Explorer':
-            reply_text = "<a href='https://explorer.ore.network/'>"
-            "https://explorer.ore.network/</a>"
+            reply_text = "<a href='https://explorer.ore.network/'>https://explorer.ore.network/</a>"
         case '👨‍👧‍👧 Team':
             reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
         case '🧙‍♂️ API':
