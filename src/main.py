@@ -9,8 +9,8 @@ from utils.cmc import OREPrice
 from utils.eos import get_info, get_balance, create_new_keypair
 from utils.logger import logger as Logger
 
-latest_price = OREPrice()
 logger = Logger
+latest_price = OREPrice()
 storage = MemoryStorage()
 
 bot = Bot(token=os.getenv('TELEGRAM_BOT_API_KEY'),  parse_mode=types.ParseMode.HTML)
@@ -31,7 +31,7 @@ class Help(StatesGroup):
 dp = Dispatcher(bot, storage=storage)
 dp.filters_factory.bind(AdminFilter)
 
-@dp.message_handler(commands=['start', 'help'])
+@dp.message_handler(commands=['info', 'links'])
 async def start_cmd_handler(message: types.Message):
     keyboard_markup = types.ReplyKeyboardMarkup(row_width=3)
     # default row_width is 3, so here we can omit it actually
@@ -80,7 +80,7 @@ async def help_msg_handler(message: types.Message, state: FSMContext):
             reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
         case '🧑‍💻 GitHub':
             reply_text = "<a href='https://github.com/Open-Rights-Exchange'>https://github.com/Open-Rights-Exchange</a>"
-        case 'Block Explorer':
+        case '⛓ Block Explorer':
             reply_text = "<a href='https://explorer.ore.network/'>https://explorer.ore.network/</a>"
         case '👨‍👧‍👧 Team':
             reply_text = "<a href='https://oreid.io/'>https://oreid.io/</a>"
@@ -91,7 +91,8 @@ async def help_msg_handler(message: types.Message, state: FSMContext):
     # with message, we send types.ReplyKeyboardRemove() to hide the keyboard
 
     # Reset the State
-    await state.finish()
+    logger.debug(await state.reset_state())
+    # await state.finish()
     
 
 @dp.message_handler(commands=['admin', 'a'], is_admin=True)
@@ -115,7 +116,6 @@ async def get_volume(message: types.Message):
     This handler will return the current ORE 24Hr Volume
     """
     result = await latest_price.update_price()
-    # logger.debug(result)
     await bot.send_message(message.chat.id, f'ORE Volume (24h): ${latest_price.volume_24h:,}')
 
 @dp.message_handler(commands=['test', 't'], state="*")
@@ -135,7 +135,48 @@ async def block_chain_info(message: types.Message):
     ore_block_info = get_info()
     head_block = ore_block_info['head_block_num']
     block_producer = ore_block_info['head_block_producer']
-    await bot.send_message(message.chat.id, f'ORE Head Block: {head_block:,}\nCurrent Block Producer: {block_producer:}')
+    await bot.send_message(message.chat.id, f'ORE Head Block: {head_block:,}\nCurrent Block Producer: {block_producer}')
+
+@dp.message_handler(commands=['tip', 't'])
+async def tip_user(message: types.Message):
+    """
+    This handler sends ORE Tokens to another user
+    """
+    msg_sender = message.from_user.id
+    logger.debug(f'msg_sender: {msg_sender}')
+
+    full_command = message.get_full_command()
+    logger.debug(f'full_command: {full_command}')
+
+    # seperate the command from the args
+    try:
+        (command, recipient_and_amount) = full_command
+        (recipient, amount) = str(recipient_and_amount).split()
+        is_command = True
+    except Exception as exc:
+        await message.reply('Not a Command. Please try again. Ex: "/tip @recipient 11.0"')
+        is_command = False
+        logger.error(exc)
+
+    # Check if the command is /tip
+    if command != '/tip':
+        logger.error(f'Something went wrong! {command} is not "/tip"')
+    elif is_command:
+        logger.debug(f'recipient: {recipient}')
+
+        tip_amount = amount
+        logger.debug(f'tip_amount: {tip_amount}')
+
+        try:
+            execute_command = True
+            await message.reply(f'✅ Successfully Tipped {recipient} {tip_amount} ORE 🎉')
+        except Exception as exc:
+            execute_command = False
+            logger.error('/Tip did not complete sucessfully')
+
+        # msg_as_json = message.as_json
+        # logger.debug(msg_as_json)
+
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=True)
