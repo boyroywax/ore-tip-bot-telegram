@@ -1,4 +1,3 @@
-import json
 from eospy.cleos import Cleos
 from eospy.keys import EOSKey, check_wif
 import os
@@ -9,10 +8,12 @@ logger = Logger
 
 ce = Cleos(os.getenv('CLEOS_URL'))
 
+
 def get_info() -> dict:
     get_info = ce.get_info()
     logger.debug(get_info)
     return get_info
+
 
 def get_balance(account: str) -> list:
     kwargs = {
@@ -23,6 +24,7 @@ def get_balance(account: str) -> list:
     get_bal = ce.get_currency_balance(**kwargs)
     logger.debug(get_bal)
     return get_bal
+
 
 def create_new_keypair() -> dict:
     """

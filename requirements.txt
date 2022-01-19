@@ -1,5 +1,6 @@
 aiogram
 aiohttp
+flake8
 libeospy
 pydantic
 python-dotenv

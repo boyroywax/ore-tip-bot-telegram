@@ -4,7 +4,8 @@ import sys
 
 log_level = os.getenv('LOGGING_LEVEL')
 
-class CustomFormatter(logging.Formatter):
+
+class ColorFormatter(logging.Formatter):
     """Logging colored formatter
        adapted from https://stackoverflow.com/a/56944256/3638629
     """
@@ -43,6 +44,6 @@ handler.setLevel(level)
 
 formatter = ('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
 
-handler.setFormatter(CustomFormatter(formatter))
+handler.setFormatter(ColorFormatter(formatter))
 root.addHandler(handler)
 logger = root

@@ -11,6 +11,7 @@ from utils.logger import logger as Logger
 logger = Logger
 RESET_TIME = float(os.getenv('CMC_API_RESET_TIME'))
 
+
 @dataclass
 class CMC():
     latest_result: Optional[dict] = None
@@ -22,13 +23,16 @@ class CMC():
         base_url = os.getenv('CMC_API_ENDPOINT')
         self.api.setBaseUrl(base_url)
 
-        headers = { 'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY'), 'Content-Type': 'application/json' }
+        headers = {
+            'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY'),
+            'Content-Type': 'application/json'
+        }
         self.api.setHeaders(headers)
 
     def check_expired(self) -> bool:
         if (self.result_datetime is None):
             return True
-        
+
         time_diff = datetime.now() - self.result_datetime
         if (time_diff.total_seconds() >= RESET_TIME):
             return True
@@ -42,7 +46,7 @@ class CMC():
             kwargs = {"endpoint": endpoint, "params": params}
             self.latest_result = await self.api.makeCall('GET', **kwargs)
             self.result_datetime = datetime.now()
-        
+
         return self.latest_result
 
     async def get_ORE_price_USD(self) -> float:
@@ -53,15 +57,20 @@ class CMC():
 
     async def get_ORE_24h_volume(self):
         result = await self.get_ORE_price_info()
-        volume_24h = float(result['data']['12743']['quote']['USD']['volume_24h'])
+        volume_24h = float(
+            result['data']['12743']['quote']['USD']['volume_24h']
+        )
         logger.debug(f'volume (24h) info: {volume_24h}')
         return volume_24h
 
     async def get_ORE_24h_price_change(self):
         result = await self.get_ORE_price_info()
-        percent_change_24h = float(result['data']['12743']['quote']['USD']['percent_change_24h'])
+        percent_change_24h = float(
+            result['data']['12743']['quote']['USD']['percent_change_24h']
+        )
         logger.debug(f'percent change (24h) info: {percent_change_24h}')
         return percent_change_24h
+
 
 @dataclass
 class OREPrice():

@@ -15,6 +15,7 @@ RUN addgroup -S appgroup && adduser -S app -G appgroup
 COPY .env .
 
 COPY ./src/ .
+RUN flake8 --ignore=E501,F401,F541 --exclude=env/lib .
 
 USER app
 

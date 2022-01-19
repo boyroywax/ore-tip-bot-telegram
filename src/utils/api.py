@@ -36,7 +36,7 @@ class Api:
 
     def setHeaders(self, newHeaders):
         self.headers = newHeaders
-    
+
     def setAuth(self, auth_user, auth_pass):
         self.auth = aiohttp.BasicAuth(auth_user, auth_pass)
 
@@ -51,7 +51,7 @@ class Api:
 
     async def makeCall(self, method, **kwargs) -> dict:
         for arg in kwargs:
-            match arg: 
+            match arg:
                 case 'endpoint':
                     endpoint = kwargs[arg]
                 case 'params':
@@ -70,7 +70,11 @@ class Api:
             # PARAMS PASSED
             if params is not None:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, headers=self.headers, params=params) as resp:
+                    async with session.get(
+                        url,
+                        headers=self.headers,
+                        params=params
+                    ) as resp:
                         return await self.returnResponse(resp)
             # NO PARAMS PASSED
             else:
@@ -81,13 +85,28 @@ class Api:
         elif method == 'POST':
             async with aiohttp.ClientSession() as session:
                 if self.auth is not None:
-                    async with session.request('POST', url, json=data, headers=self.headers, auth=self.auth) as resp:
+                    async with session.request(
+                        'POST',
+                        url,
+                        json=data,
+                        headers=self.headers,
+                        auth=self.auth
+                    ) as resp:
                         return await self.returnResponse(resp)
                 else:
-                    async with session.request('POST', url, json=data, headers=self.headers) as resp:
+                    async with session.request(
+                        'POST',
+                        url,
+                        json=data,
+                        headers=self.headers
+                    ) as resp:
                         return await self.returnResponse(resp)
         # PUT
         elif method == 'PUT':
             async with aiohttp.ClientSession() as session:
-                async with session.put(url, json=data, headers=self.headers) as resp:
+                async with session.put(
+                    url,
+                    json=data,
+                    headers=self.headers
+                ) as resp:
                     return await self.returnResponse(resp)
