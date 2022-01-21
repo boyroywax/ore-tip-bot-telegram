@@ -1,0 +1,28 @@
+apiVersion: skaffold/v2beta10
+kind: Config
+
+profiles:
+- name: init-deploy
+  build:
+    artifacts:
+    - image: boyroywax/ore-redis-prod
+      context: ./redis/
+      docker:
+        dockerfile: ./Dockerfile.prod
+  deploy:
+    kubectl:
+      manifests:
+        - ./k8s-spec/redis-dep.yaml
+        - ./k8s-spec/redis-pvc.yaml
+- name: production
+  build:
+    artifacts:
+    - image: boyroywax/ore-bot-telegram-prod
+      context: ./
+      docker:
+        dockerfile: ./Dockerfile
+  deploy:
+    kubectl:
+      manifests:
+        - ./k8s-spec/configmap.yaml
+        - ./k8s-spec/telegram-bot-dep.yaml

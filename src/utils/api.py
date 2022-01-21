@@ -8,7 +8,6 @@ from typing import Optional
 
 from pydantic.dataclasses import dataclass
 
-
 logger = Logger
 
 
