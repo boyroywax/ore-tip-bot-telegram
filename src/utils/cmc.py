@@ -7,7 +7,6 @@ from typing_extensions import Self
 from utils.api import Api
 from utils.logger import logger as Logger
 
-
 logger = Logger
 RESET_TIME = float(os.getenv('CMC_API_RESET_TIME'))
 
@@ -21,13 +20,13 @@ class CMC():
     def __init__(self) -> None:
         self.api = Api()
         base_url = os.getenv('CMC_API_ENDPOINT')
-        self.api.setBaseUrl(base_url)
+        self.api.set_base_url(base_url)
 
         headers = {
             'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY'),
             'Content-Type': 'application/json'
         }
-        self.api.setHeaders(headers)
+        self.api.set_headers(headers)
 
     def check_expired(self) -> bool:
         if (self.result_datetime is None):
@@ -44,7 +43,7 @@ class CMC():
             endpoint = '/v1/cryptocurrency/quotes/latest'
             params = {'slug': 'ore-network'}
             kwargs = {"endpoint": endpoint, "params": params}
-            self.latest_result = await self.api.makeCall('GET', **kwargs)
+            self.latest_result = await self.api.make_call('GET', **kwargs)
             self.result_datetime = datetime.now()
 
         return self.latest_result
@@ -55,7 +54,7 @@ class CMC():
         logger.debug(f'result: {result}')
         return usd_price
 
-    async def get_ORE_24h_volume(self):
+    async def get_ORE_24h_volume(self) -> float:
         result = await self.get_ORE_price_info()
         volume_24h = float(
             result['data']['12743']['quote']['USD']['volume_24h']
@@ -63,7 +62,7 @@ class CMC():
         logger.debug(f'volume (24h) info: {volume_24h}')
         return volume_24h
 
-    async def get_ORE_24h_price_change(self):
+    async def get_ORE_24h_price_change(self) -> float:
         result = await self.get_ORE_price_info()
         percent_change_24h = float(
             result['data']['12743']['quote']['USD']['percent_change_24h']

@@ -19,7 +19,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 RUN pip install flake8
 # Copy the src and lint
 COPY ./src/ .
-RUN python3 -m flake8 --ignore=E501,F401,F541 --exclude=env/lib .
+RUN python3 -m flake8 --ignore=E501,F401,F541,F841 --exclude=env/lib .
 
 
 

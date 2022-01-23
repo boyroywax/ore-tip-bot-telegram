@@ -1,16 +1,21 @@
 import os
+from re import A
+import typing_extensions
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher.filters import BoundFilter
+from aiogram.dispatcher.filters import BoundFilter, ContentTypeFilter
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import ChatType, ContentType, Update
 
 from utils.cmc import OREPrice
 from utils.eos import get_info, get_balance, create_new_keypair
 from utils.logger import logger as Logger
+from utils.redis import Redis
 
 logger = Logger
 latest_price = OREPrice()
+redis = Redis()
 storage = MemoryStorage()
 
 bot = Bot(
@@ -34,6 +39,10 @@ class AdminFilter(BoundFilter):
 
 class Help(StatesGroup):
     active = State()
+
+
+class Photo(StatesGroup):
+    exists = State()
 
 
 dp = Dispatcher(bot, storage=storage)
@@ -170,7 +179,7 @@ async def block_chain_info(message: types.Message):
     )
 
 
-@dp.message_handler(commands=['tip', 't'])
+@dp.message_handler(commands=['tip', 't'], is_admin=True)
 async def tip_user(message: types.Message):
     """
     This handler sends ORE Tokens to another user
@@ -214,5 +223,78 @@ async def tip_user(message: types.Message):
         # logger.debug(msg_as_json)
 
 
+@dp.message_handler(commands=['submit'], state="*")
+async def start_submit(message: types.Message):
+    logger.debug(
+        'submission process started'
+    )
+    await Photo.exists.set()
+
+  
+# class MyHandler(BaseHandler[Message]):
+#     async def handle(self) -> Any:
+#          await self.event.answer("Hello!")
+
+# async def process_message(message):
+#     if message.text == '/start':
+#         message.answer('Starting.')
+#     else:
+#         message.answer('Stopping.')
+
+@dp.message_handler(content_types=["photo"], state=Photo.exists)
+async def download_photo(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    path = 'meme_entries'
+    image = f'image-{user_id}.jpg'
+    # https://giters.com/aiogram/aiogram/issues/665
+    await message.photo[-1].download(destination_file=f'./{path}/{image}', make_dirs=True)
+    await state.reset_state()
+
+# ContentTypeFilter(content_types=[ContentType.ANY])
+# @dp.message_handler(commands=["done"], state=Photo.exists)
+# @dp.message_handler(ContentTypeFilter(content_types=[ContentType.ANY]), state=Photo.exists)
+# async def meme_entry(message: types.Message, state: FSMContext):
+#     # result: Chat = await bot.get_chat()
+#     for item in (await bot.get_updates(limit=1)):
+#         current_message = item
+
+#     # update_id = previous_message.index
+#     # logger.debug(f'update_id: {update_id}')
+#     logger.debug(f'current message: {current_message}')
+#     update_id = current_message.message.chat.id
+#     logger.debug(f'update_id: {update_id}')
+#     previous_id = update_id
+#     logger.debug(f'previous_id: {previous_id}')
+#     previous_update = await bot.get_chat(chat_id=previous_id)
+#     logger.debug(f'previous_update: {previous_update}')
+#     # file_id = await previous_message.get_updates(offs)
+#     # file = await bot.download_file_by_id(previous_message)
+#     # logger.debug(f'received an image {file.__hash__}')
+#     # logger.debug(message.document.file_unique_id)
+#     await state.reset_state()
+    # big_file_id = message.big_file_id
+    # logger.debug(big_file_id)
+    # try:
+    #     # file_info = await bot.get_file(message.photo.index[len(message.photo.index) - 1].file_id)
+    #     # meme_entry = (await message.photo.).read()
+    #     logger.debug(f'received file: {await bot.download_file_by_id(big_file_id)}')
+    #     await bot.send_photo(message.chat.id, meme_entry)
+
+    # except Exception as exc:
+    #     logger.error(f'Photo did not download - {exc}')
+
+
+@dp.message_handler(chat_type=ChatType.SUPERGROUP)
+async def add_hit(message: types.Message):
+    user_hit = f'{str(message.from_user.id)}_hits'
+    logger.debug(f'user_hit: {user_hit}')
+    redis_return = await redis.inc_value(user_hit)
+    logger.debug(f'redis_return for redis.inc_value: {redis_return}')
+
+    if not message.from_user.is_bot:
+        total_return = await redis.inc_value('Total_Hits')
+        logger.debug(f'total_return for redis.inc_value: {total_return}')
+
+
 if __name__ == '__main__':
-    executor.start_polling(dispatcher=dp, skip_updates=True)
+    executor.start_polling(dispatcher=dp, skip_updates=False)

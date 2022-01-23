@@ -1,5 +1,6 @@
-aiogram
+aiogram==2.18
 aiohttp
+asyncio_redis
 flake8
 libeospy
 pydantic

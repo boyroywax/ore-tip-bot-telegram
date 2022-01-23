@@ -1,26 +1,25 @@
 import aiohttp
 import json
-import os
-
+# import os
 from aiohttp.helpers import BasicAuth
-from utils.logger import logger as Logger
 from typing import Optional
-
 from pydantic.dataclasses import dataclass
+
+from utils.logger import logger as Logger
 
 logger = Logger
 
 
 @dataclass
 class Api:
-    baseUrl: Optional[str] = None
+    base_url: Optional[str] = None
     headers: Optional[dict or json] = None
     auth: Optional[BasicAuth] = None
 
     # def __init__(self):
     #     """ Declare base url and headers for standard oreid interaction
     #     """
-    #     self.baseUrl = os.getenv('API_URL')
+    #     self.base_url = os.getenv('API_URL')
     #     self.headers = {
     #         'user-agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) '
     #                        'AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -30,16 +29,16 @@ class Api:
     #         'Content-Type': 'application/json'
     #     }
 
-    def setBaseUrl(self, newBaseUrl):
-        self.baseUrl = newBaseUrl
+    def set_base_url(self, new_base_url):
+        self.base_url = new_base_url
 
-    def setHeaders(self, newHeaders):
-        self.headers = newHeaders
+    def set_headers(self, new_headers):
+        self.headers = new_headers
 
-    def setAuth(self, auth_user, auth_pass):
+    def set_auth(self, auth_user, auth_pass):
         self.auth = aiohttp.BasicAuth(auth_user, auth_pass)
 
-    async def returnResponse(self, resp):
+    async def return_response(self, resp):
         if resp.status == 200 or resp.status == 201:
             try:
                 return await resp.json()
@@ -48,7 +47,7 @@ class Api:
         else:
             return {'status': resp.status, 'message': await resp.text()}
 
-    async def makeCall(self, method, **kwargs) -> dict:
+    async def make_call(self, method, **kwargs) -> dict:
         for arg in kwargs:
             match arg:
                 case 'endpoint':
@@ -59,9 +58,9 @@ class Api:
                     data = kwargs[arg]
 
         if endpoint is None:
-            url = self.baseUrl
+            url = self.base_url
         else:
-            url = f'{self.baseUrl}{endpoint}'
+            url = f'{self.base_url}{endpoint}'
         logger.debug(f'API endpoint called: {url}')
 
         # GET
@@ -74,7 +73,7 @@ class Api:
                         headers=self.headers,
                         params=params
                     ) as resp:
-                        return await self.returnResponse(resp)
+                        return await self.return_response(resp)
             # NO PARAMS PASSED
             else:
                 async with aiohttp.ClientSession() as session:
@@ -82,7 +81,7 @@ class Api:
                         url,
                         headers=self.headers
                     ) as resp:
-                        return await self.returnResponse(resp)
+                        return await self.return_response(resp)
         # POST
         elif method == 'POST':
             async with aiohttp.ClientSession() as session:
@@ -94,7 +93,7 @@ class Api:
                         headers=self.headers,
                         auth=self.auth
                     ) as resp:
-                        return await self.returnResponse(resp)
+                        return await self.return_response(resp)
                 else:
                     async with session.request(
                         'POST',
@@ -102,7 +101,7 @@ class Api:
                         json=data,
                         headers=self.headers
                     ) as resp:
-                        return await self.returnResponse(resp)
+                        return await self.return_response(resp)
         # PUT
         elif method == 'PUT':
             async with aiohttp.ClientSession() as session:
@@ -111,7 +110,7 @@ class Api:
                     json=data,
                     headers=self.headers
                 ) as resp:
-                    return await self.returnResponse(resp)
+                    return await self.return_response(resp)
         # INCORRECT METHOD
         else:
             logger.error(f'An incorrect method was passed to Api class - {method}')
