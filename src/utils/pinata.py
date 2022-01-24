@@ -48,4 +48,3 @@ class Pinata():
         kwargs = {"endpoint": endpoint, "data": data}
         result = await self.pinata_api.make_call('POST', **kwargs)
         return result
-

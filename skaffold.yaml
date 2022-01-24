@@ -12,8 +12,10 @@ profiles:
   deploy:
     kubectl:
       manifests:
-        - ./k8s-spec/redis-dep.yaml
+        - ./k8s-spec/telegram-bot-sc.yaml
+        - ./k8s-spec/telegram-bot-pvc.yaml
         - ./k8s-spec/redis-pvc.yaml
+        - ./k8s-spec/redis-dep.yaml
 - name: production
   build:
     artifacts:

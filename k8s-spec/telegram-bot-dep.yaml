@@ -32,6 +32,11 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "1500m"
+        volumeMounts:
+        - mountPath: /home/app/web/src/meme_entries
+          name: bot-vol1
+          readOnly: false
+          subPath: ore/meme_entries
         envFrom:
           - configMapRef:
               name: config-prod
@@ -43,10 +48,12 @@ spec:
           name: telegram-port
           protocol: UDP
       restartPolicy: Always
+
       volumes:
       - name: bot-vol1
         persistentVolumeClaim:
           claimName: ore-pvc-bot
+
 ---
 apiVersion: v1
 kind: Service

@@ -249,109 +249,20 @@ async def download_photo(message: types.Message, state: FSMContext):
     image = f'image-{user_id}.jpg'
     # Check for previous entry
 
-    dir_list = os.listdir('./meme_entries')
-    logger.debug(dir_list)
-    for img in dir_list:
-        if img != f'{image}':
-            # https://giters.com/aiogram/aiogram/issues/665
-            try:
-                await message.photo[-1].download(destination_file=f'./{path}/{image}', make_dirs=True)
-                await message.reply(f'{message.from_user.mention} Your entry has been accepted!')
-            except Exception as exc:
-                await message.reply(f"Sorry, your entry was not submitted! {exc}")
-        else:
-            await message.reply("You already have submitted your entry.")
-    # download = await message.photo[-1].download(destination_file=BytesIO, make_dirs=True)
-
-    # entry = await message.photo[-1].get_file()
-    # upload using pinata
-    # access_token = await pinata.get_access_token()
-    # logger.debug(f'access_token: {access_token}')
-    # keyvalues = {
-    #     'telegram_user_id': user_id,
-    #     # 'submit_time': datetime.now().__str__
-    # }
-
-    # data = {}
-    # file_url = f'https://api.telegram.org/file/bot{bot._token}/{entry.file_path}'
-    # logger.debug(f'file_url: {file_url}')
-    # response = requests.get(file_url)
-
-    # img_base64 = base64.b64encode(response.content)
-    # img_str = img_base64.decode('utf-8')  # str
-
-    # files1 = {
-    #     "file": img_str
-    #     }
-
-    # f = open(response, 'rb')
-    # img_data = f.read()
-    # f.close()
-    # enc_data = base64.b64encode(img_data)
-    # json.dump({'image': enc_data}, open('c:/out.json', 'w'))
-    # logger.debug(files1)
-
-    # response = requests.get(file_url)
-    # img = Image.open(BytesIO(response.content))
-
-
-    # print(json.dumps(data))
-    # file = open(urllib.request.urlopen(file_url))
-    # img = file.read()
-    # data['img'] = base64.encodebytes(img).decode('utf-8')
-    # logger.debug(data)
-
-    # class NumpyArrayEncoder(JSONEncoder):
-    #     def default(self, obj):
-    #         if isinstance(obj, np.ndarray):
-    #             return obj.tolist()
-    #         return JSONEncoder.default(self, obj)
-
-    # img = requests.get(file_url).raw
-    # # string1 = img.read().decode('utf-8')
-    # # logger.debug(string1)
-    # data = {}
-    # with open(requests.get(file_url), mode='rb') as file:
-    #     img = file.read().decode('utf-8')
-
-    # data['img'] = base64.b64encode(img)
-    # # img.tobytes()
-    # numpyArrayOne = np.array(data['img'])
-    # logger.debug(f'numpyArrayOne: {numpyArrayOne}')
-
-    # # # Serialization
-    # numpyData = {"array": numpyArrayOne}
-    # encodedNumpyData = json.loads(numpyData, cls=NumpyArrayEncoder)
-
-    # json_data = np.array(img)
-    # new_image = Image.fromarray(np.array(json_data), dtype='uint8')
-    # logger.debug(f'json: {json_data}')
-
-    # data_string = json.load(dict(files1))
-    # s = json.dumps(data_string, indent=4, sort_keys=True)
-
-    # files = [
-    #     ("file", (f"{user_id}.jpg", open(download, "rb")))
-    #     # ('file', ('images/1.png', open('images/1.png', "rb"))),
-    # ]
-
-    # logger.debug(f'files: {files1}')
-    # file_jpgdata = BytesIO(response.content)
-    # dt = Image.open(file_jpgdata)
-
-    # try:
-    # #     with requests.get(file_url).content as f:
-    # #         with Image.open(BytesIO(f)) as f1:
-    # #             files = [('file', (f"{user_id}.jpg", json.dumps(f1)))]
-    # #     # ('file', ('images/1.png', open('images/1.png', "rb"))),
-    # # # ]
-    # #             result = await pinata.upload_file({"file": files})
-    # #             logger.debug(f'result of upload_file: {result}')
-    #     result = await pinata.upload_file({"file": open(download, "rb")})
-    #     logger.debug(f'result of upload_file: {result}')
-
-    # except Exception as exc:
-    #     logger.debug(f'Photo not uploaded to Pinata: {exc}')
+    # dir_list = os.listdir('./meme_entries')
+    # logger.debug(dir_list)
+    # for img in dir_list:
+    if os.path.exists(f'{path}/{image}'):
+        await message.reply("You already have submitted your entry. You can use /delete_meme to remove your current entry and upload a new one.")
+        await state.reset_state()
+        # https://giters.com/aiogram/aiogram/issues/665
+        return
+    else:
+        try:
+            await message.photo[-1].download(destination_file=f'./{path}/{image}', make_dirs=True)
+            await message.reply(f'{message.from_user.mention} Your entry has been accepted!')
+        except Exception as exc:
+            await message.reply(f"Sorry, your entry was not submitted! {exc}")
 
     await state.reset_state()
 
@@ -360,38 +271,48 @@ async def download_photo(message: types.Message, state: FSMContext):
 async def del_photo(message: types.Message):
     user_id = message.from_user.id
     logger.debug(f'user_id: {user_id}')
-    path = 'meme_entries'
+    path = './meme_entries'
     image = f'image-{user_id}.jpg'
     try:
-        os.remove(f'{path}/{image}')
-        await message.reply(f'{message.from_user.mention} Your entry has been deleted')
+        if os.path.exists(f'{path}/{image}'):
+            os.remove(f'{path}/{image}')
+            await message.reply(f'{message.from_user.mention} Your entry has been deleted')
+        else:
+            await message.reply(f'{message.from_user.mention} You have no entry for the Meme Contest. Type /submit to get started')
     except Exception as exc:
         await message.reply(f'{message.from_user.mention} Entry Deletion failed. {exc}')
+
 
 @dp.message_handler(commands=["entry"])
 async def get_photo(message: types.Message):
     user_id = message.from_user.id
-    logger.debug(f'user_id: {user_id}')
+    # logger.debug(f'user_id: {user_id}')
     path = 'meme_entries'
     image = f'image-{user_id}.jpg'
     try:
-        with open(f'{path}/{image}', "r+b") as image1:
-            await message.reply_photo(image1, caption=f"{message.from_user.mention}'s Entry")
+        with open(f'{path}/{image}', "r+b") as photo:
+            await message.reply_photo(photo, caption=f"Meme Entry by {message.from_user.mention}")
         # await message.reply_photo(os.open(image, 'rb'))
     except Exception as exc:
         await message.reply(f'{message.from_user.mention} Entry View failed. {exc}')
 
 
-# @dp.message_handler(chat_type=ChatType.SUPERGROUP)
-# async def add_hit(message: types.Message):
-#     user_hit = f'{str(message.from_user.id)}_hits'
-#     logger.debug(f'user_hit: {user_hit}')
-#     redis_return = await redis.inc_value(user_hit)
-#     logger.debug(f'redis_return for redis.inc_value: {redis_return}')
+@dp.message_handler(commands=["hits"])
+async def get_hits(message: types.Message):
+    hits = await redis.get_value(f'{str(message.from_user.id)}_hits')
+    await message.reply(f'{message.from_user.mention} has {hits} hits.')
 
-#     if not message.from_user.is_bot:
-#         total_return = await redis.inc_value('Total_Hits')
-#         logger.debug(f'total_return for redis.inc_value: {total_return}')
+
+@dp.message_handler(chat_type=ChatType.SUPERGROUP)
+async def add_hit(message: types.Message):
+    user_hit = f'{str(message.from_user.id)}_hits'
+    logger.debug(f'user_hit: {user_hit}')
+    redis_return = await redis.inc_value(user_hit)
+    logger.debug(f'redis_return for redis.inc_value: {redis_return}')
+
+    if not message.from_user.is_bot:
+        total_return = await redis.inc_value('Total_Hits')
+        logger.debug(f'total_return for redis.inc_value: {total_return}')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=False)

@@ -41,8 +41,19 @@ RUN apk add git
 ENV HOME=/home/app
 RUN mkdir -p ${HOME}
 
+ENV USER=app
+ENV UID=1001
+
 # create the app user
-RUN addgroup -S appgroup && adduser -S app -G appgroup
+RUN addgroup -S $USER
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "$HOME" \
+    --ingroup "$USER" \
+    --no-create-home \
+    --uid "$UID" \
+    "$USER"
 
 # create the appropriate directories
 ENV APP_HOME=/home/app/web
@@ -64,7 +75,7 @@ COPY ./entrypoint.sh $APP_HOME
 RUN chmod +x ${APP_HOME}/entrypoint.sh
 
 # chown all the files to the app user
-RUN chown -R app:appgroup $APP_HOME
+RUN chown -R app:app $APP_HOME
 
 # change to the app user
 USER app
