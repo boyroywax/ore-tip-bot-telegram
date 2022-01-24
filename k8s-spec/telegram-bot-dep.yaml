@@ -33,7 +33,7 @@ spec:
             memory: "2Gi"
             cpu: "1500m"
         volumeMounts:
-        - mountPath: /home/app/web/src/meme_entries
+        - mountPath: /home/app/web/meme_entries
           name: bot-vol1
           readOnly: false
           subPath: ore/meme_entries
