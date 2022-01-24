@@ -238,6 +238,7 @@ async def start_submit(message: types.Message):
         'submission process started'
     )
     await Photo.exists.set()
+    await message.reply(f'{message.from_user.mention} Please upload your JPG photo')
 
 
 @dp.message_handler(content_types=["photo", "file"], state=Photo.exists)
@@ -250,8 +251,8 @@ async def download_photo(message: types.Message, state: FSMContext):
 
     dir_list = os.listdir('./meme_entries')
     logger.debug(dir_list)
-    for image in dir_list:
-        if image != f'{image}':
+    for img in dir_list:
+        if img != f'{image}':
             # https://giters.com/aiogram/aiogram/issues/665
             try:
                 await message.photo[-1].download(destination_file=f'./{path}/{image}', make_dirs=True)
@@ -355,16 +356,42 @@ async def download_photo(message: types.Message, state: FSMContext):
     await state.reset_state()
 
 
-@dp.message_handler(chat_type=ChatType.SUPERGROUP)
-async def add_hit(message: types.Message):
-    user_hit = f'{str(message.from_user.id)}_hits'
-    logger.debug(f'user_hit: {user_hit}')
-    redis_return = await redis.inc_value(user_hit)
-    logger.debug(f'redis_return for redis.inc_value: {redis_return}')
+@dp.message_handler(commands=["delete_meme"])
+async def del_photo(message: types.Message):
+    user_id = message.from_user.id
+    logger.debug(f'user_id: {user_id}')
+    path = 'meme_entries'
+    image = f'image-{user_id}.jpg'
+    try:
+        os.remove(f'{path}/{image}')
+        await message.reply(f'{message.from_user.mention} Your entry has been deleted')
+    except Exception as exc:
+        await message.reply(f'{message.from_user.mention} Entry Deletion failed. {exc}')
 
-    if not message.from_user.is_bot:
-        total_return = await redis.inc_value('Total_Hits')
-        logger.debug(f'total_return for redis.inc_value: {total_return}')
+@dp.message_handler(commands=["entry"])
+async def get_photo(message: types.Message):
+    user_id = message.from_user.id
+    logger.debug(f'user_id: {user_id}')
+    path = 'meme_entries'
+    image = f'image-{user_id}.jpg'
+    try:
+        with open(f'{path}/{image}', "r+b") as image1:
+            await message.reply_photo(image1, caption=f"{message.from_user.mention}'s Entry")
+        # await message.reply_photo(os.open(image, 'rb'))
+    except Exception as exc:
+        await message.reply(f'{message.from_user.mention} Entry View failed. {exc}')
+
+
+# @dp.message_handler(chat_type=ChatType.SUPERGROUP)
+# async def add_hit(message: types.Message):
+#     user_hit = f'{str(message.from_user.id)}_hits'
+#     logger.debug(f'user_hit: {user_hit}')
+#     redis_return = await redis.inc_value(user_hit)
+#     logger.debug(f'redis_return for redis.inc_value: {redis_return}')
+
+#     if not message.from_user.is_bot:
+#         total_return = await redis.inc_value('Total_Hits')
+#         logger.debug(f'total_return for redis.inc_value: {total_return}')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=False)
