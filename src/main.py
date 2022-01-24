@@ -1,22 +1,31 @@
+# import base64
+# import json
 import os
-from re import A
-import typing_extensions
+# import urllib
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher.filters import BoundFilter, ContentTypeFilter
+from aiogram.dispatcher.filters import BoundFilter
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import ChatType, ContentType, Update
+from aiogram.types import ChatType
+# from datetime import datetime
+# import numpy as np
+# from PIL import Image
+# import requests
+# from json import JSONEncoder
+# from io import BytesIO
 
 from utils.cmc import OREPrice
 from utils.eos import get_info, get_balance, create_new_keypair
 from utils.logger import logger as Logger
 from utils.redis import Redis
+# from utils.pinata import Pinata
 
 logger = Logger
 latest_price = OREPrice()
 redis = Redis()
 storage = MemoryStorage()
+# pinata = Pinata()
 
 bot = Bot(
     token=os.getenv('TELEGRAM_BOT_API_KEY'),
@@ -230,58 +239,120 @@ async def start_submit(message: types.Message):
     )
     await Photo.exists.set()
 
-  
-# class MyHandler(BaseHandler[Message]):
-#     async def handle(self) -> Any:
-#          await self.event.answer("Hello!")
 
-# async def process_message(message):
-#     if message.text == '/start':
-#         message.answer('Starting.')
-#     else:
-#         message.answer('Stopping.')
-
-@dp.message_handler(content_types=["photo"], state=Photo.exists)
+@dp.message_handler(content_types=["photo", "file"], state=Photo.exists)
 async def download_photo(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
+    logger.debug(f'user_id: {user_id}')
     path = 'meme_entries'
     image = f'image-{user_id}.jpg'
-    # https://giters.com/aiogram/aiogram/issues/665
-    await message.photo[-1].download(destination_file=f'./{path}/{image}', make_dirs=True)
-    await state.reset_state()
+    # Check for previous entry
 
-# ContentTypeFilter(content_types=[ContentType.ANY])
-# @dp.message_handler(commands=["done"], state=Photo.exists)
-# @dp.message_handler(ContentTypeFilter(content_types=[ContentType.ANY]), state=Photo.exists)
-# async def meme_entry(message: types.Message, state: FSMContext):
-#     # result: Chat = await bot.get_chat()
-#     for item in (await bot.get_updates(limit=1)):
-#         current_message = item
+    dir_list = os.listdir('./meme_entries')
+    logger.debug(dir_list)
+    for image in dir_list:
+        if image != f'{image}':
+            # https://giters.com/aiogram/aiogram/issues/665
+            try:
+                await message.photo[-1].download(destination_file=f'./{path}/{image}', make_dirs=True)
+                await message.reply(f'{message.from_user.mention} Your entry has been accepted!')
+            except Exception as exc:
+                await message.reply(f"Sorry, your entry was not submitted! {exc}")
+        else:
+            await message.reply("You already have submitted your entry.")
+    # download = await message.photo[-1].download(destination_file=BytesIO, make_dirs=True)
 
-#     # update_id = previous_message.index
-#     # logger.debug(f'update_id: {update_id}')
-#     logger.debug(f'current message: {current_message}')
-#     update_id = current_message.message.chat.id
-#     logger.debug(f'update_id: {update_id}')
-#     previous_id = update_id
-#     logger.debug(f'previous_id: {previous_id}')
-#     previous_update = await bot.get_chat(chat_id=previous_id)
-#     logger.debug(f'previous_update: {previous_update}')
-#     # file_id = await previous_message.get_updates(offs)
-#     # file = await bot.download_file_by_id(previous_message)
-#     # logger.debug(f'received an image {file.__hash__}')
-#     # logger.debug(message.document.file_unique_id)
-#     await state.reset_state()
-    # big_file_id = message.big_file_id
-    # logger.debug(big_file_id)
+    # entry = await message.photo[-1].get_file()
+    # upload using pinata
+    # access_token = await pinata.get_access_token()
+    # logger.debug(f'access_token: {access_token}')
+    # keyvalues = {
+    #     'telegram_user_id': user_id,
+    #     # 'submit_time': datetime.now().__str__
+    # }
+
+    # data = {}
+    # file_url = f'https://api.telegram.org/file/bot{bot._token}/{entry.file_path}'
+    # logger.debug(f'file_url: {file_url}')
+    # response = requests.get(file_url)
+
+    # img_base64 = base64.b64encode(response.content)
+    # img_str = img_base64.decode('utf-8')  # str
+
+    # files1 = {
+    #     "file": img_str
+    #     }
+
+    # f = open(response, 'rb')
+    # img_data = f.read()
+    # f.close()
+    # enc_data = base64.b64encode(img_data)
+    # json.dump({'image': enc_data}, open('c:/out.json', 'w'))
+    # logger.debug(files1)
+
+    # response = requests.get(file_url)
+    # img = Image.open(BytesIO(response.content))
+
+
+    # print(json.dumps(data))
+    # file = open(urllib.request.urlopen(file_url))
+    # img = file.read()
+    # data['img'] = base64.encodebytes(img).decode('utf-8')
+    # logger.debug(data)
+
+    # class NumpyArrayEncoder(JSONEncoder):
+    #     def default(self, obj):
+    #         if isinstance(obj, np.ndarray):
+    #             return obj.tolist()
+    #         return JSONEncoder.default(self, obj)
+
+    # img = requests.get(file_url).raw
+    # # string1 = img.read().decode('utf-8')
+    # # logger.debug(string1)
+    # data = {}
+    # with open(requests.get(file_url), mode='rb') as file:
+    #     img = file.read().decode('utf-8')
+
+    # data['img'] = base64.b64encode(img)
+    # # img.tobytes()
+    # numpyArrayOne = np.array(data['img'])
+    # logger.debug(f'numpyArrayOne: {numpyArrayOne}')
+
+    # # # Serialization
+    # numpyData = {"array": numpyArrayOne}
+    # encodedNumpyData = json.loads(numpyData, cls=NumpyArrayEncoder)
+
+    # json_data = np.array(img)
+    # new_image = Image.fromarray(np.array(json_data), dtype='uint8')
+    # logger.debug(f'json: {json_data}')
+
+    # data_string = json.load(dict(files1))
+    # s = json.dumps(data_string, indent=4, sort_keys=True)
+
+    # files = [
+    #     ("file", (f"{user_id}.jpg", open(download, "rb")))
+    #     # ('file', ('images/1.png', open('images/1.png', "rb"))),
+    # ]
+
+    # logger.debug(f'files: {files1}')
+    # file_jpgdata = BytesIO(response.content)
+    # dt = Image.open(file_jpgdata)
+
     # try:
-    #     # file_info = await bot.get_file(message.photo.index[len(message.photo.index) - 1].file_id)
-    #     # meme_entry = (await message.photo.).read()
-    #     logger.debug(f'received file: {await bot.download_file_by_id(big_file_id)}')
-    #     await bot.send_photo(message.chat.id, meme_entry)
+    # #     with requests.get(file_url).content as f:
+    # #         with Image.open(BytesIO(f)) as f1:
+    # #             files = [('file', (f"{user_id}.jpg", json.dumps(f1)))]
+    # #     # ('file', ('images/1.png', open('images/1.png', "rb"))),
+    # # # ]
+    # #             result = await pinata.upload_file({"file": files})
+    # #             logger.debug(f'result of upload_file: {result}')
+    #     result = await pinata.upload_file({"file": open(download, "rb")})
+    #     logger.debug(f'result of upload_file: {result}')
 
     # except Exception as exc:
-    #     logger.error(f'Photo did not download - {exc}')
+    #     logger.debug(f'Photo not uploaded to Pinata: {exc}')
+
+    await state.reset_state()
 
 
 @dp.message_handler(chat_type=ChatType.SUPERGROUP)
@@ -294,7 +365,6 @@ async def add_hit(message: types.Message):
     if not message.from_user.is_bot:
         total_return = await redis.inc_value('Total_Hits')
         logger.debug(f'total_return for redis.inc_value: {total_return}')
-
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=False)

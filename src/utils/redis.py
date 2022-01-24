@@ -21,12 +21,12 @@ class Redis():
     async def start_pubsub(self, sub_channel: list):
         """Start Subscriber to a PubSub Channel"""
         connection = await self.create_connection()
-        logger.debug('Redis Connection Succeeded')
+        logger.info('Redis Connection Succeeded')
 
         # create redis subscription to pubsub
         subscriber = await connection.start_subscribe()
         await subscriber.subscribe(sub_channel)
-        logger.debug('subscribed to channel')
+        logger.debug(f'subscribed to channel: {sub_channel}')
         return connection, subscriber
 
     async def stop_pubsub(self, connection):
@@ -66,6 +66,7 @@ class Redis():
             await connection.delete([my_key])
             connection.close()
         except Exception as exc:
+            logger.error(f'get_value Exception: {exc}')
             retrieved_value = None
         return retrieved_value
 
@@ -78,18 +79,18 @@ class Redis():
             connection.close()
             return True
         except Exception as exc:
-            logger.debug(exc)
+            logger.debug(f'set_value Exception: {exc}')
             return False
 
     async def inc_value(self, my_key: str) -> bool:
         try:
             connection = await self.create_connection()
             # Increment a key
-            # await connection.incr(my_key)
+            await connection.incr(my_key)
             connection.close()
             return True
         except Exception as exc:
-            logger.debug(f'inc_value is failing: {exc}')
+            logger.error(f'inc_value is failing: {exc}')
             return False
 
 # Hash Section
@@ -102,6 +103,7 @@ class Redis():
             connection.close()
             return hash_response
         except Exception as exc:
+            logger.error(f'set_hash: {exc}')
             hash_response = 0
             return hash_response
 
@@ -113,7 +115,7 @@ class Redis():
             connection.close()
             return True
         except Exception as exc:
-            logger.debug(exc)
+            logger.error(f'Set hashmaps: {exc}')
             return False
 
     async def get_hash(self, my_key, my_field) -> str:
@@ -124,6 +126,7 @@ class Redis():
             retrieved_value = await connection.hget(my_key, my_field)
             connection.close()
         except Exception as exc:
+            logger.error(f'gat_hash: {exc}')
             retrieved_value is None
         return retrieved_value
 
@@ -134,6 +137,7 @@ class Redis():
             value_exists = await connection.hexists(my_key, my_field)
             connection.close()
         except Exception as exc:
+            logger.error(f'exists_hash: {exc}')
             value_exists is False
         return value_exists
 
@@ -149,6 +153,7 @@ class Redis():
                 else:
                     user_list.append(str(item))
         except Exception as exc:
+            logger.error(f'hash scan: {exc}')
             user_list.append("No Keys")
         return user_list
 
@@ -165,6 +170,7 @@ class Redis():
             #     else:
             #         user_list.append(str(item))
         except Exception as exc:
+            logger.error(f'hash_set_scan: {exc}')
             user_list.append("No Keys")
         return user_list
 
@@ -176,6 +182,7 @@ class Redis():
             hash_response = await connection.hdel(my_key, fields)
             connection.close()
         except Exception as exc:
+            logger.error(f'del_hash_set: {exc}')
             hash_response = 0
         return hash_response
 

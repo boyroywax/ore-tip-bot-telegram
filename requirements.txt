@@ -3,5 +3,7 @@ aiohttp
 asyncio_redis
 flake8
 libeospy
+numpy
+Pillow
 pydantic
 python-dotenv

@@ -49,10 +49,6 @@ ENV APP_HOME=/home/app/web
 RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME
 
-# copy entrypoint
-COPY ./entrypoint.sh $APP_HOME
-RUN chmod +x ${APP_HOME}/entrypoint.sh
-
 # install dependencies
 # RUN apt-get update && apt-get install -y --no-install-recommends netcat
 COPY --from=builder /usr/src/app/wheels /wheels
@@ -62,6 +58,10 @@ RUN pip install --no-cache /wheels/*
 
 # copy project
 COPY ./src $APP_HOME
+
+# copy entrypoint
+COPY ./entrypoint.sh $APP_HOME
+RUN chmod +x ${APP_HOME}/entrypoint.sh
 
 # chown all the files to the app user
 RUN chown -R app:appgroup $APP_HOME
