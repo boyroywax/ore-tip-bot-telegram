@@ -63,7 +63,7 @@ class Redis():
             connection = await self.create_connection()
             # Get a key
             retrieved_value = await connection.get(my_key)
-            await connection.delete([my_key])
+            # await connection.delete([my_key])
             connection.close()
         except Exception as exc:
             logger.error(f'get_value Exception: {exc}')

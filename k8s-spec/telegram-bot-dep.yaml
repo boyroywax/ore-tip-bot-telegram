@@ -28,10 +28,10 @@ spec:
         resources:
           requests:
             memory: "1Gi"
-            cpu: "1000m"
+            cpu: "500m"
           limits:
             memory: "2Gi"
-            cpu: "1500m"
+            cpu: "1000m"
         volumeMounts:
         - mountPath: /home/app/web/meme_entries
           name: bot-vol1
@@ -40,9 +40,9 @@ spec:
         envFrom:
           - configMapRef:
               name: config-prod
-        securityContext:
-          runAsUser: 1001
-          runAsNonRoot: true
+        # securityContext:
+        #   runAsUser: 1001
+        #   runAsNonRoot: true
         ports:
         - containerPort: 80
           name: telegram-port

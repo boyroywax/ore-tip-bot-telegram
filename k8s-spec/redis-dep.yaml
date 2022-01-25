@@ -17,13 +17,13 @@ spec:
         tier: backend
         env: production
     spec:
-      # initContainers:
-      # - name: disable-thp
-      #   image: boyroywax/ore-redis-prod:latest
-      #   volumeMounts:
-      #     - name: host-sys
-      #       mountPath: /host-sys
-      #   command: ["sh", "-c", "echo 'never' >/host-sys/kernel/mm/transparent_hugepage/enabled"]
+      initContainers:
+      - name: disable-thp
+        image: boyroywax/ore-redis-prod:latest
+        volumeMounts:
+          - name: host-sys
+            mountPath: /host-sys
+        command: ["sh", "-c", "echo 'never' >/host-sys/kernel/mm/transparent_hugepage/enabled"]
       containers:
       - image: boyroywax/ore-redis-prod:latest
         name: redis-prod
@@ -44,9 +44,9 @@ spec:
           initialDelaySeconds: 1
           periodSeconds: 4
         volumeMounts:
-        # - mountPath: /sys
-        #   name: host-sys
-        #   readOnly: false
+        - mountPath: /sys
+          name: host-sys
+          readOnly: false
         - mountPath: /data
           name: redis-vol1
           readOnly: false
@@ -58,9 +58,9 @@ spec:
       - name: redis-vol1
         persistentVolumeClaim:
           claimName: ore-pvc-redis
-      # - name: host-sys
-      #   hostPath:
-      #     path: /sys
+      - name: host-sys
+        hostPath:
+          path: /sys
       restartPolicy: Always
 ---
 apiVersion: v1

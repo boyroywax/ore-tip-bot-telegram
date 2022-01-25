@@ -297,22 +297,22 @@ async def get_photo(message: types.Message):
         await message.reply(f'{message.from_user.mention} Entry View failed. {exc}')
 
 
-# @dp.message_handler(commands=["hits"])
-# async def get_hits(message: types.Message):
-#     hits = await redis.get_value(f'{str(message.from_user.id)}_hits')
-#     await message.reply(f'{message.from_user.mention} has {hits} hits.')
+@dp.message_handler(commands=["hits"])
+async def get_hits(message: types.Message):
+    hits = await redis.get_value(f'{str(message.from_user.id)}_hits')
+    await message.reply(f'{message.from_user.mention} has {hits} hits.')
 
 
-# @dp.message_handler(chat_type=ChatType.SUPERGROUP)
-# async def add_hit(message: types.Message):
-#     user_hit = f'{str(message.from_user.id)}_hits'
-#     logger.debug(f'user_hit: {user_hit}')
-#     redis_return = await redis.inc_value(user_hit)
-#     logger.debug(f'redis_return for redis.inc_value: {redis_return}')
+@dp.message_handler(chat_type=ChatType.SUPERGROUP)
+async def add_hit(message: types.Message):
+    user_hit = f'{str(message.from_user.id)}_hits'
+    logger.debug(f'user_hit: {user_hit}')
+    redis_return = await redis.inc_value(user_hit)
+    logger.debug(f'redis_return for redis.inc_value: {redis_return}')
 
-#     if not message.from_user.is_bot:
-#         total_return = await redis.inc_value('Total_Hits')
-#         logger.debug(f'total_return for redis.inc_value: {total_return}')
+    if not message.from_user.is_bot:
+        total_return = await redis.inc_value('Total_Hits')
+        logger.debug(f'total_return for redis.inc_value: {total_return}')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=False)

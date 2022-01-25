@@ -87,7 +87,7 @@ WORKDIR /data
 COPY entrypoint.prod.sh /usr/local/bin/
 ENTRYPOINT ["entrypoint.prod.sh"]
 
-USER redis
+# USER redis
 
 EXPOSE 6379
 CMD ["redis-server"]
