@@ -194,54 +194,6 @@ class Redis():
             hash_response = await connection.flushall()
             connection.close()
         except Exception as exc:
+            logger.error(f'flush_all: {hash_response}')
             hash_response = 0
         return hash_response
-
-    # async def add_hit(self, ctx):
-    #     """ Increment user hit and Total hit"""
-    #     # increment user hit
-    #     user_hits = str(ctx.author.id) + "_hits"
-    #     logger.info('User hit being added to Redis - {}'.format(user_hits))
-    #     inc_user_value = await self.inc_value(user_hits)
-
-    #     if inc_user_value is True:
-    #         logger.info(
-    #             'The Bot has interecpted a message and registered a hit for user'
-    #         )
-    #     else:
-    #         logger.error(
-    #             'The bot intercepted a message but could not register a hit for user'
-    #         )
-
-    #     # register hit to total count
-    #     total_hits = await self.inc_value('hits')
-
-    #     if total_hits is True:
-    #         logger.info(
-    #             'The Bot has interecpted a message and incremented the Server Total'
-    #         )
-    #     else:
-    #         logger.error(
-    #             'The bot intercepted a message but could not increment the Server Total'
-    #         )
-
-    #     #  register hit to channel_hits
-    #     channel_key = str(ctx.channel.id) + "_hits"
-    #     hit_time = str(time.time())
-    #     user_id = str(ctx.author.id)
-    #     channel_hit_register = await self.set_hash(
-    #         channel_key, user_id, hit_time
-    #     )
-
-    #     if channel_hit_register != 0:
-    #         logger.info(
-    #             'The Bot has interecpted a message and updated the channelid_hit datetime. - {}'.format(
-    #                 channel_hit_register
-    #             )
-    #         )
-    #     else:
-    #         logger.error(
-    #             'The bot intercepted a message but could not update the channelid_hit datetime. - {}'.format(
-    #                 channel_hit_register
-    #             )
-    #         )
