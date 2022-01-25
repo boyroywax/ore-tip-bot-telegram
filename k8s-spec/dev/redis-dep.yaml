@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-prod
-  namespace: ore
+  name: redis-dev
+  namespace: ore-dev
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: redis
       tier: backend
-      env: production
+      env: development
   template:
     metadata:
       labels:
         app: redis
         tier: backend
-        env: production
+        env: development
     spec:
       initContainers:
       - name: disable-thp
@@ -25,15 +25,15 @@ spec:
             mountPath: /host-sys
         command: ["sh", "-c", "echo 'never' >/host-sys/kernel/mm/transparent_hugepage/enabled"]
       containers:
-      - image: boyroywax/ore-redis-prod:latest
-        name: redis-prod
+      - image: boyroywax/ore-redis-dev:latest
+        name: redis-dev
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "250m"
+            memory: "256Mi"
+            cpu: "125m"
           limits:
-            memory: "2Gi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "250m"
         ports:
         - containerPort: 6379
         readinessProbe:
@@ -66,8 +66,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-prod
-  namespace: ore
+  name: redis-dev
+  namespace: ore-dev
 spec:
   type: ClusterIP
   ports:
@@ -76,5 +76,5 @@ spec:
   selector:
     app: redis
     tier: backend
-    env: production
+    env: development
 ---

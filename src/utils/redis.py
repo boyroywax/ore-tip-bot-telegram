@@ -70,6 +70,23 @@ class Redis():
             retrieved_value = None
         return retrieved_value
 
+    async def get_keys(self, pattern) -> str:
+        """Retrive key: value pairs"""
+        try:
+            connection = await self.create_connection()
+            # Get keys of a certain pattern
+            cursor = await connection.scan(match=pattern)
+            logger.debug(cursor)
+            retrieved_values = await cursor.fetchall()
+            logger.debug(retrieved_values)
+            # retrieved_values = 'one'
+            # await connection.delete([my_key])
+            connection.close()
+        except Exception as exc:
+            logger.error(f'get_values Exception: {exc}')
+            retrieved_values = None
+        return retrieved_values
+
     # Key-Values Section
     async def set_value(self, my_key, my_value) -> bool:
         try:
@@ -194,6 +211,6 @@ class Redis():
             hash_response = await connection.flushall()
             connection.close()
         except Exception as exc:
-            logger.error(f'flush_all: {hash_response}')
+            logger.error(f'flush_all: {exc}')
             hash_response = 0
         return hash_response

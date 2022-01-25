@@ -1,19 +1,10 @@
-# import base64
-# import json
 import os
-# import urllib
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import BoundFilter
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ChatType
-# from datetime import datetime
-# import numpy as np
-# from PIL import Image
-# import requests
-# from json import JSONEncoder
-# from io import BytesIO
 
 from utils.cmc import OREPrice
 from utils.eos import get_info, get_balance, create_new_keypair
@@ -53,6 +44,24 @@ class Help(StatesGroup):
 class Photo(StatesGroup):
     exists = State()
 
+
+async def get_command(message: types.Message):
+    full_command = message.get_full_command()
+    logger.debug(f'full_command: {full_command}')
+
+    # seperate the command from the args
+    try:
+        (command, recipient_and_amount) = full_command
+        (recipient, amount) = str(recipient_and_amount).split()
+        return(command, recipient, amount)
+    except Exception as exc:
+        logger.error(exc)
+        (command, recipient) = full_command
+        return(command, recipient)
+        # await message.reply(
+        #     'Not a Command. Please try again. Ex: "/tip @recipient 11.0"'
+        # )
+        # return (None, None, None)
 
 dp = Dispatcher(bot, storage=storage)
 dp.filters_factory.bind(AdminFilter)
@@ -196,25 +205,12 @@ async def tip_user(message: types.Message):
     msg_sender = message.from_user.id
     logger.debug(f'msg_sender: {msg_sender}')
 
-    full_command = message.get_full_command()
-    logger.debug(f'full_command: {full_command}')
-
-    # seperate the command from the args
-    try:
-        (command, recipient_and_amount) = full_command
-        (recipient, amount) = str(recipient_and_amount).split()
-        is_command = True
-    except Exception as exc:
-        await message.reply(
-            'Not a Command. Please try again. Ex: "/tip @recipient 11.0"'
-        )
-        is_command = False
-        logger.error(exc)
+    (command, recipient, amount) = await get_command(message)
 
     # Check if the command is /tip
     if command != '/tip':
         logger.error(f'Something went wrong! {command} is not "/tip"')
-    elif is_command:
+    else:
         logger.debug(f'recipient: {recipient}')
 
         tip_amount = amount
@@ -295,6 +291,47 @@ async def get_photo(message: types.Message):
         # await message.reply_photo(os.open(image, 'rb'))
     except Exception as exc:
         await message.reply(f'{message.from_user.mention} Entry View failed. {exc}')
+
+
+@dp.message_handler(commands=["vote"])
+async def vote(message: types.Message):
+    msg_sender = message.from_user.id
+    logger.debug(f'msg_sender: {msg_sender}')
+
+    voted = await redis.get_value(f'{str(message.from_user.id)}_voted')
+
+    if voted is None:
+        command, recipient = await get_command(message)
+        if command != '/vote':
+            await message.reply('How did this get here?')
+        else:
+            vote = f'{recipient}_votes'
+            redis_return = await redis.inc_value(vote)
+            voter = f'{msg_sender}_voted'
+            redis_return2 = await redis.inc_value(voter)
+            await message.reply(f'✅ Thank You {message.from_user.mention} for Voting')
+            logger.debug(f'redis_return for redis.inc_value(s): {redis_return} {redis_return2}')
+    else:
+        await message.reply(f'Sorry {message.from_user.mention}, you have already voted.')
+
+
+@dp.message_handler(commands=["results"])
+async def get_votes(message: types.Message):
+    votes = await redis.get_keys('*_votes')
+    logger.debug(f'votes: {votes}')
+    vote_tally = {}
+    if votes is None:
+        await message.reply('There are no votes.')
+    else:
+        for telegram_user in votes:
+            num_votes = await redis.get_value(telegram_user)
+            vote_tally[telegram_user] = num_votes
+        sorted_votes = sorted(vote_tally.items(), key=lambda x: x[1], reverse=True)
+        logger.debug(f'sorted_votes: {sorted_votes}')
+        for vote in sorted_votes:
+            (user_, votes_) = vote
+            size = len(user_)
+            await message.reply(f'{user_[:size - 6]} has {votes_} votes.')
 
 
 @dp.message_handler(commands=["hits"])

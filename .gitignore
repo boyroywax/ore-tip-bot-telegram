@@ -152,3 +152,4 @@ cython_debug/
 #.idea/
 
 k8s-spec/configmap.yaml
+k8s-spec/dev/configmap.yaml

@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tipbot-telegram-dev
+  namespace: ore-dev
+  labels:
+    app: tipbot
+    tier: frontend
+    env: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tipbot
+      tier: frontend
+      env: development
+  template:
+    metadata:
+      labels:
+        app: tipbot
+        tier: frontend
+        env: development
+    spec:
+      containers:
+      - name: tipbot-telegram-dev
+        image: boyroywax/ore-bot-telegram-dev:latest
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "128m"
+          limits:
+            memory: "1Gi"
+            cpu: "256m"
+        volumeMounts:
+        - mountPath: /home/app/web/meme_entries
+          name: bot-vol1
+          readOnly: false
+          subPath: ore/meme_entries
+        envFrom:
+          - configMapRef:
+              name: config-dev
+        securityContext:
+          runAsUser: 1001
+          runAsNonRoot: true
+        ports:
+        - containerPort: 80
+          name: telegram-port
+          protocol: UDP
+      restartPolicy: Always
+
+      volumes:
+      - name: bot-vol1
+        persistentVolumeClaim:
+          claimName: ore-pvc-bot
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bot-service
+  namespace: ore-dev
+spec:
+  ports:
+  - name: telegram-port
+    port: 80
+    protocol: UDP
+    targetPort: 80
+  selector:
+    app: tipbot
+    tier: frontend
+    env: development
+  type: ClusterIP
+---

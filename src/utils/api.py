@@ -16,19 +16,6 @@ class Api:
     headers: Optional[dict or json] = None
     auth: Optional[BasicAuth] = None
 
-    # def __init__(self):
-    #     """ Declare base url and headers for standard oreid interaction
-    #     """
-    #     self.base_url = os.getenv('API_URL')
-    #     self.headers = {
-    #         'user-agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) '
-    #                        'AppleWebKit/537.36 (KHTML, like Gecko) '
-    #                        'Chrome/45.0.2454.101 Safari/537.36'),
-    #         'api-key': os.getenv('API_KEY'),
-    #         'app_id': os.getenv('API_ID'),
-    #         'Content-Type': 'application/json'
-    #     }
-
     def set_base_url(self, new_base_url):
         self.base_url = new_base_url
 

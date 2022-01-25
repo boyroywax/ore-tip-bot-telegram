@@ -72,6 +72,10 @@ COPY ./src $APP_HOME
 COPY ./entrypoint.sh $APP_HOME
 RUN chmod +x ${APP_HOME}/entrypoint.sh
 
+# add an external volume for meme_entries
+RUN mkdir ${APP_HOME}/meme_entries
+VOLUME ${APP_HOME}/meme_entries
+
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
