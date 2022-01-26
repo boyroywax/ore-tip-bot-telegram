@@ -22,7 +22,7 @@ profiles:
     - image: boyroywax/ore-bot-telegram-dev
       context: ./
       docker:
-        dockerfile: ./Dockerfile
+        dockerfile: ./Dockerfile.dev
   deploy:
     kubectl:
       manifests:
@@ -39,10 +39,10 @@ profiles:
   deploy:
     kubectl:
       manifests:
-        - ./k8s-spec/telegram-bot-sc.yaml
-        - ./k8s-spec/telegram-bot-pvc.yaml
-        - ./k8s-spec/redis-pvc.yaml
-        - ./k8s-spec/redis-dep.yaml
+        - ./k8s-spec/prod/telegram-bot-sc.yaml
+        - ./k8s-spec/prod/telegram-bot-pvc.yaml
+        - ./k8s-spec/prod/redis-pvc.yaml
+        - ./k8s-spec/prod/redis-dep.yaml
 - name: production
   build:
     artifacts:
@@ -53,5 +53,5 @@ profiles:
   deploy:
     kubectl:
       manifests:
-        - ./k8s-spec/configmap.yaml
-        - ./k8s-spec/telegram-bot-dep.yaml
+        - ./k8s-spec/prod/configmap.yaml
+        - ./k8s-spec/prod/telegram-bot-dep.yaml

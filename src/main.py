@@ -63,6 +63,14 @@ async def get_command(message: types.Message):
         # )
         # return (None, None, None)
 
+
+async def get_mentioned_user(user_mention: int):
+    try:
+        user_name = await redis.get_value(user_mention)
+        return user_name
+    except Exception as exc:
+        logger.debug(f'get_mentioned failed: {exc}')
+
 dp = Dispatcher(bot, storage=storage)
 dp.filters_factory.bind(AdminFilter)
 
@@ -233,6 +241,7 @@ async def start_submit(message: types.Message):
     logger.debug(
         'submission process started'
     )
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
     await Photo.exists.set()
     await message.reply(f'{message.from_user.mention} Please upload your JPG photo')
 
@@ -299,20 +308,59 @@ async def vote(message: types.Message):
     logger.debug(f'msg_sender: {msg_sender}')
 
     voted = await redis.get_value(f'{str(message.from_user.id)}_voted')
+    logger.debug(f'voted: {voted}')
 
-    if voted is None:
+    if (voted is None) or (int(voted) == 0):
         command, recipient = await get_command(message)
         if command != '/vote':
             await message.reply('How did this get here?')
         else:
+            # inc number of recipient votes
             vote = f'{recipient}_votes'
             redis_return = await redis.inc_value(vote)
             voter = f'{msg_sender}_voted'
             redis_return2 = await redis.inc_value(voter)
+            redis_return3 = await redis.set_value(str(msg_sender), recipient)
             await message.reply(f'✅ Thank You {message.from_user.mention} for Voting')
-            logger.debug(f'redis_return for redis.inc_value(s): {redis_return} {redis_return2}')
+            logger.debug(f'redis_return for redis.inc_value(s): {redis_return} {redis_return2} {redis_return3}')
+    elif int(voted) >= 1:
+        voted_for_member = await redis.get_value(str(message.from_user.id))
+        logger.debug(f'voted for member: {voted_for_member}')
+        user_id_ = await get_mentioned_user(voted_for_member)
+        logger.debug(f'user_id_return_from_get_chat_member: {user_id_}')
+        member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
+        logger.debug(f'member: {member}')
+        await message.reply(f'Sorry {message.from_user.mention}, you have already voted. You voted for {member.user.mention} ')
+
+
+@dp.message_handler(commands=["delete_vote"])
+async def del_vote(message: types.Message):
+    msg_sender = message.from_user.id
+    logger.debug(f'msg_sender: {msg_sender}')
+
+    voted_state = await redis.get_value(f'{str(message.from_user.id)}_voted')
+    logger.debug(f'voted: {voted_state}')
+    if (voted_state is None) or (int(voted_state) == 0):
+        await message.reply(f'{message.from_user.mention}, you have not voted yet!')
+    elif int(voted_state) >= 1:
+        # remove 1 vote from user
+        await redis.set_value(f'{str(message.from_user.id)}_voted', str(int(voted_state) - 1))
+
+        # get the person our user voted for
+        voted_for = await redis.get_value(f'{str(msg_sender)}')
+
+        # get number of votes for person that user voted for
+        num_votes = await redis.get_value(f'{voted_for}_votes')
+        logger.debug(f'num_votes: {num_votes}')
+
+        # remove vote from person voted_for
+        await redis.set_value(f'{voted_for}_votes', str(int(num_votes) - 1))
+
+        # change vote to empty
+        await redis.set_value(f'{str(msg_sender)}', '0')
+        await message.reply(f'{message.from_user.mention}, you have deleted your vote!')
     else:
-        await message.reply(f'Sorry {message.from_user.mention}, you have already voted.')
+        await message.reply(f'{message.from_user.mention}, something went wrong')
 
 
 @dp.message_handler(commands=["results"])
@@ -331,7 +379,10 @@ async def get_votes(message: types.Message):
         for vote in sorted_votes:
             (user_, votes_) = vote
             size = len(user_)
-            await message.reply(f'{user_[:size - 6]} has {votes_} votes.')
+            user_id_ = await get_mentioned_user(user_[:size - 6])
+            member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
+
+            await message.reply(f'{member.user.mention} has {votes_} vote(s).')
 
 
 @dp.message_handler(commands=["hits"])

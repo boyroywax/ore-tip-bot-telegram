@@ -8,6 +8,7 @@ A friendly Telegram bot created for the ORE Network. Written in Python using aio
 * Python Version: 3.10.1
 * VS Studio Code Version: 1.63.2
 * Flake8 Linter (can ignore E501-line too long)
+* Redis server
 * CoinMarketCap [API Key](https://coinmarketcap.com/api/documentation/v1/#section/Introduction)
 * Telegram Bot [API Key](https://stackoverflow.com/questions/43291868/where-to-find-the-telegram-api-key)
 

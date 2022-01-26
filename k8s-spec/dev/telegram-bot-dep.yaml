@@ -40,9 +40,9 @@ spec:
         envFrom:
           - configMapRef:
               name: config-dev
-        securityContext:
-          runAsUser: 1001
-          runAsNonRoot: true
+        # securityContext:
+        #   runAsUser: 1001
+        #   runAsNonRoot: true
         ports:
         - containerPort: 80
           name: telegram-port
