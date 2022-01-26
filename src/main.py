@@ -12,6 +12,7 @@ from utils.logger import logger as Logger
 from utils.redis import Redis
 # from utils.pinata import Pinata
 
+
 logger = Logger
 latest_price = OREPrice()
 redis = Redis()
@@ -318,8 +319,10 @@ async def vote(message: types.Message):
             # inc number of recipient votes
             vote = f'{recipient}_votes'
             redis_return = await redis.inc_value(vote)
+            # mark the user as having voted once
             voter = f'{msg_sender}_voted'
             redis_return2 = await redis.inc_value(voter)
+            # Save who the user voted for
             redis_return3 = await redis.set_value(str(msg_sender), recipient)
             await message.reply(f'✅ Thank You {message.from_user.mention} for Voting')
             logger.debug(f'redis_return for redis.inc_value(s): {redis_return} {redis_return2} {redis_return3}')
@@ -330,7 +333,7 @@ async def vote(message: types.Message):
         logger.debug(f'user_id_return_from_get_chat_member: {user_id_}')
         member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
         logger.debug(f'member: {member}')
-        await message.reply(f'Sorry {message.from_user.mention}, you have already voted. You voted for {member.user.mention} ')
+        await message.reply(f'Sorry {message.from_user.mention}, you have already voted. You voted for {member.user.mention}')
 
 
 @dp.message_handler(commands=["delete_vote"])
@@ -393,6 +396,9 @@ async def get_hits(message: types.Message):
 
 @dp.message_handler(chat_type=ChatType.SUPERGROUP)
 async def add_hit(message: types.Message):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
     user_hit = f'{str(message.from_user.id)}_hits'
     logger.debug(f'user_hit: {user_hit}')
     redis_return = await redis.inc_value(user_hit)
