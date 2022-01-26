@@ -154,6 +154,27 @@ async def admin_panel(message: types.Message):
     This handler is an admin panel launched by '/admin' command
     """
     await bot.send_message(message.chat.id, "Welcome to the Admin Panel")
+    # await bot.send_message(message.chat.id, "Clearing Redis...")
+    # await redis.flush_all()
+    # await bot.send_message(message.chat.id, "Redis Cache cleared!")
+
+
+@dp.message_handler(commands=['get_entries'], is_admin=True)
+async def get_entries(message: types.Message):
+    """
+    This handler is an admin panel launched by '/admin' command
+    """
+    await bot.send_message(message.chat.id, "Fetching All The Entries")
+    entries = os.listdir('./meme_entries')
+    for image in entries:
+        if image == 'test':
+            pass
+        else:
+            logger.debug(f'Entry: {image}')
+            user_id, file_ext = image.split('.')
+            with open(f'./meme_entries/{image}', "r+b") as photo:
+                user = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id[6:])
+                await message.reply_photo(photo, caption=f"Meme Entry by {user.user.mention}")
 
 
 @dp.message_handler(commands=['price', 'p'])
@@ -239,6 +260,9 @@ async def tip_user(message: types.Message):
 
 @dp.message_handler(commands=['submit'], state="*")
 async def start_submit(message: types.Message):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
     logger.debug(
         'submission process started'
     )
@@ -249,15 +273,14 @@ async def start_submit(message: types.Message):
 
 @dp.message_handler(content_types=["photo", "file"], state=Photo.exists)
 async def download_photo(message: types.Message, state: FSMContext):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
     user_id = message.from_user.id
     logger.debug(f'user_id: {user_id}')
     path = 'meme_entries'
     image = f'image-{user_id}.jpg'
-    # Check for previous entry
 
-    # dir_list = os.listdir('./meme_entries')
-    # logger.debug(dir_list)
-    # for img in dir_list:
     if os.path.exists(f'{path}/{image}'):
         await message.reply("You already have submitted your entry. You can use /delete_meme to remove your current entry and upload a new one.")
         await state.reset_state()
@@ -275,6 +298,9 @@ async def download_photo(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands=["delete_meme"])
 async def del_photo(message: types.Message):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
     user_id = message.from_user.id
     logger.debug(f'user_id: {user_id}')
     path = './meme_entries'
@@ -291,6 +317,9 @@ async def del_photo(message: types.Message):
 
 @dp.message_handler(commands=["entry"])
 async def get_photo(message: types.Message):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
     user_id = message.from_user.id
     # logger.debug(f'user_id: {user_id}')
     path = 'meme_entries'
@@ -305,14 +334,22 @@ async def get_photo(message: types.Message):
 
 @dp.message_handler(commands=["vote"])
 async def vote(message: types.Message):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
+    if message.from_user.is_bot:
+        await message.reply(f'{message.from_user.mention}, bots cannot vote!')
+        return
+
     msg_sender = message.from_user.id
     logger.debug(f'msg_sender: {msg_sender}')
 
     voted = await redis.get_value(f'{str(message.from_user.id)}_voted')
     logger.debug(f'voted: {voted}')
 
+    command, recipient = await get_command(message)
+
     if (voted is None) or (int(voted) == 0):
-        command, recipient = await get_command(message)
         if command != '/vote':
             await message.reply('How did this get here?')
         else:
@@ -331,13 +368,31 @@ async def vote(message: types.Message):
         logger.debug(f'voted for member: {voted_for_member}')
         user_id_ = await get_mentioned_user(voted_for_member)
         logger.debug(f'user_id_return_from_get_chat_member: {user_id_}')
-        member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
-        logger.debug(f'member: {member}')
-        await message.reply(f'Sorry {message.from_user.mention}, you have already voted. You voted for {member.user.mention}')
+        if user_id_ is not None:
+            member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
+            logger.debug(f'member: {member}')
+            await message.reply(f'Sorry {message.from_user.mention}, you have already voted. You voted for {member.user.mention}')
+        else:
+            await redis.set_value(str(recipient), 'unknown')
+            # inc number of recipient votes
+            vote = f'{recipient}_votes'
+            redis_return = await redis.inc_value(vote)
+            # mark the user as having voted once
+            voter = f'{msg_sender}_voted'
+            redis_return2 = await redis.inc_value(voter)
+            # Save who the user voted for
+            redis_return3 = await redis.set_value(str(msg_sender), recipient)
+            await message.reply(f'✅ Thank You {message.from_user.mention} for Voting')
+            logger.debug(f'redis_return for redis.inc_value(s): {redis_return} {redis_return2} {redis_return3}')
+
+            # await message.reply(f'Sorry {message.from_user.mention}, you cannot vote for that member, they need to send a message to the chat to be eligible.')
 
 
 @dp.message_handler(commands=["delete_vote"])
 async def del_vote(message: types.Message):
+    # pair the user_name with user_id
+    await redis.set_value(message.from_user.mention, str(message.from_user.id))
+
     msg_sender = message.from_user.id
     logger.debug(f'msg_sender: {msg_sender}')
 
@@ -381,11 +436,15 @@ async def get_votes(message: types.Message):
         logger.debug(f'sorted_votes: {sorted_votes}')
         for vote in sorted_votes:
             (user_, votes_) = vote
-            size = len(user_)
-            user_id_ = await get_mentioned_user(user_[:size - 6])
-            member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
-
-            await message.reply(f'{member.user.mention} has {votes_} vote(s).')
+            if votes_ != '0':
+                size = len(user_)
+                user_id_ = await get_mentioned_user(user_[:size - 6])
+                try:
+                    if get_mentioned_user is not None:
+                        member = await bot.get_chat_member(chat_id=message.chat.id, user_id=user_id_)
+                        await bot.send_message(chat_id=message.chat.id, text=f'{member.user.mention} has {votes_} vote(s).')
+                except Exception:
+                    await bot.send_message(chat_id=message.chat.id, text=f'{user_[:size - 6]} has {votes_} votes(s).')
 
 
 @dp.message_handler(commands=["hits"])
