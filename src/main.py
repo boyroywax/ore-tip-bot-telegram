@@ -1,3 +1,5 @@
+import csv
+import json
 import os
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import BoundFilter
@@ -325,9 +327,12 @@ async def get_photo(message: types.Message):
     path = 'meme_entries'
     image = f'image-{user_id}.jpg'
     try:
-        with open(f'{path}/{image}', "r+b") as photo:
-            await message.reply_photo(photo, caption=f"Meme Entry by {message.from_user.mention}")
-        # await message.reply_photo(os.open(image, 'rb'))
+        if os.path.exists(f'./{path}/{image}'):
+            with open(f'{path}/{image}', "r+b") as photo:
+                await message.reply_photo(photo, caption=f"Meme Entry by {message.from_user.mention}")
+            # await message.reply_photo(os.open(image, 'rb'))
+        else:
+            await message.reply(f'{message.from_user.mention}, you have no entry for the Meme Contest. Type /submit to get started')
     except Exception as exc:
         await message.reply(f'{message.from_user.mention} Entry View failed. {exc}')
 
@@ -348,6 +353,10 @@ async def vote(message: types.Message):
     logger.debug(f'voted: {voted}')
 
     command, recipient = await get_command(message)
+
+    if (recipient is None) or (recipient == ""):
+        await message.reply(f'Sorry {message.from_user.mention}, you must select a user to vote for. Like so, "/vote @username".')
+        return
 
     if (voted is None) or (int(voted) == 0):
         if command != '/vote':
@@ -421,7 +430,7 @@ async def del_vote(message: types.Message):
         await message.reply(f'{message.from_user.mention}, something went wrong')
 
 
-@dp.message_handler(commands=["results"])
+@dp.message_handler(commands=["results"], is_admin=True)
 async def get_votes(message: types.Message):
     votes = await redis.get_keys('*_votes')
     logger.debug(f'votes: {votes}')
@@ -436,7 +445,7 @@ async def get_votes(message: types.Message):
         logger.debug(f'sorted_votes: {sorted_votes}')
         for vote in sorted_votes:
             (user_, votes_) = vote
-            if votes_ != '0':
+            if (votes_ != '0') and (user_ is not None) and (user_ != "_votes"):
                 size = len(user_)
                 user_id_ = await get_mentioned_user(user_[:size - 6])
                 try:
@@ -445,6 +454,56 @@ async def get_votes(message: types.Message):
                         await bot.send_message(chat_id=message.chat.id, text=f'{member.user.mention} has {votes_} vote(s).')
                 except Exception:
                     await bot.send_message(chat_id=message.chat.id, text=f'{user_[:size - 6]} has {votes_} votes(s).')
+
+
+@dp.message_handler(commands=['voters_list'], is_admin=True)
+async def get_voters(message: types.Message):
+    voted_list = await redis.get_keys('*_voted')
+    logger.debug(f'Voted list: {voted_list}')
+    with open('vote_data.json', 'w') as outfile:
+        votes = []
+        i = 1
+        for vote in voted_list:
+            vote_package = {}
+            vote_package['user_id'] = vote[:len(vote) - 6]
+            vote_package['voted_for'] = await redis.get_value(vote_package['user_id'])
+            try:
+                user_info = await bot.get_chat_member(-1001519982064, vote_package['user_id'])
+                logger.debug(user_info)
+                vote_package['user_info'] = user_info.to_python()
+                # logger.debug(f'user_info: {user_info.to_dict()}')
+                # vote_package['user_name'] = user_info['result']['user']['username']
+                # vote_package['first_name'] = user_info['result']['user']['first_name']
+                # vote_package['last_name'] = user_info['result']['user']['last_name']
+                # vote_package['is_bot'] = user_info['result']['user']['is_bot']
+            except Exception:
+                vote_package['user_info'] = str('Cannot Find in Chat')
+            votes.append(vote_package)
+            i += 1
+            # await bot.send_message(chat_id=message.chat.id, text=f'{user} voted for {voted_for}')
+    # Directly from dictionary
+        json.dump(votes, outfile)
+
+    # Opening JSON file and loading the data
+    # into the variable data
+    with open('vote_data.json') as json_file:
+        jsondata = json.load(json_file)
+
+    data_file = open('vote_data.csv', 'w', newline='')
+    csv_writer = csv.writer(data_file)
+
+    count = 0
+    for data in jsondata:
+        if count == 0:
+            header = data.keys()
+            csv_writer.writerow(header)
+            count += 1
+        csv_writer.writerow(data.values())
+
+    data_file.close()
+
+    with open('vote_data.csv', 'r+b') as voter_data:
+        await message.reply_document(voter_data, caption='vote_data.csv')
 
 
 @dp.message_handler(commands=["hits"])

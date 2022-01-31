@@ -116,7 +116,8 @@ class Redis():
         try:
             connection = await self.create_connection()
             # Set a hash field
-            hash_response = await connection.hset(my_key, my_field, my_value)
+            hash_response = await connection.hset(
+                my_key, my_field, my_value)
             connection.close()
             return hash_response
         except Exception as exc:
